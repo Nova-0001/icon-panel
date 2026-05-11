@@ -10,12 +10,26 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { height: 100%; overflow: hidden; }
+
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       font-size: 13px;
       background: #ffffff;
       color: #1a1a1a;
-      overflow-x: hidden;
+    }
+
+    /* ── Full-height flex layout ──────────────────────────── */
+    #app        { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    #top-panel  { flex-shrink: 0; }
+    #scroll-area{ flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+    #sel-bar    { flex-shrink: 0; }
+
+    /* ── Panel header ─────────────────────────────────────── */
+    #app-header {
+      padding: 5px 12px 4px;
+      font-size: 11px; font-weight: 600; color: #666;
+      background: #fff; border-bottom: 1px solid #e8e8e8;
     }
 
     input, button, select { font-family: inherit; font-size: inherit; }
@@ -123,8 +137,21 @@
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 3px;
-      min-height: 100px;
     }
+
+    /* ── List view ────────────────────────────────────────── */
+    #icon-grid.list-view { grid-template-columns: 1fr; padding: 4px 8px; }
+    #icon-grid.list-view .ip-cell {
+      flex-direction: row; justify-content: flex-start;
+      padding: 6px 10px; gap: 10px; border-radius: 4px;
+    }
+    #icon-grid.list-view .ip-cell .icn { font-size: 18px; flex-shrink: 0; }
+    #icon-grid.list-view .ip-cell .lbl {
+      font-size: 11px; color: #555; text-align: left;
+      width: auto; white-space: normal; overflow: visible;
+    }
+    #icon-grid.list-view .ip-cell.sel .lbl { color: #0078d4; }
+    #icon-grid.list-view .chk-badge { top: 50%; right: 8px; transform: translateY(-50%); }
 
     .ip-cell {
       display: flex; flex-direction: column; align-items: center;
@@ -180,7 +207,9 @@
 
     .preview-strip {
       display: flex; gap: 4px; margin-bottom: 10px;
-      min-height: 34px; align-items: center; flex-wrap: wrap;
+      min-height: 34px; max-height: 72px;
+      align-items: flex-start; flex-wrap: wrap;
+      overflow-y: auto;
     }
     .prev-chip {
       width: 32px; height: 32px; background: #fff;
@@ -275,62 +304,71 @@
 
 <div id="app">
 
-  <!-- Library tabs -->
-  <div class="lib-tabs">
-    <div class="lib-tab on"  data-lib="material"  onclick="switchLib('material')">Material<br>Icons</div>
-    <div class="lib-tab"     data-lib="tabler"     onclick="switchLib('tabler')">Tabler<br>Icons</div>
-    <div class="lib-tab"     data-lib="phosphor"   onclick="switchLib('phosphor')">Phosphor<br>Icons</div>
-    <div class="lib-tab"     data-lib="fluent"     onclick="switchLib('fluent')">Fluent UI<br>Icons</div>
-  </div>
+  <!-- Fixed top panel -->
+  <div id="top-panel">
 
-  <!-- Search -->
-  <div class="section" style="padding:10px 12px">
-    <div class="search-wrap">
-      <i class="ti ti-search si" aria-hidden="true"></i>
-      <input id="search-inp" type="text" placeholder="Search icons…"
-             autocomplete="off" spellcheck="false"
-             oninput="onSearch(this.value)">
-      <i class="ti ti-x sc" aria-label="Clear search" onclick="clearSearch()"></i>
+    <div id="app-header">Icon Panel</div>
+
+    <!-- Library tabs -->
+    <div class="lib-tabs">
+      <div class="lib-tab on"  data-lib="material"  onclick="switchLib('material')">Material<br>Icons</div>
+      <div class="lib-tab"     data-lib="tabler"     onclick="switchLib('tabler')">Tabler<br>Icons</div>
+      <div class="lib-tab"     data-lib="phosphor"   onclick="switchLib('phosphor')">Phosphor<br>Icons</div>
+      <div class="lib-tab"     data-lib="fluent"     onclick="switchLib('fluent')">Fluent UI<br>Icons</div>
     </div>
-  </div>
 
-  <!-- Style dropdown -->
-  <div class="section">
-    <div class="dd-trigger" onclick="toggleDd('style-body','style-chev')">
-      <div class="dd-left">
-        <i class="ti ti-palette" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
-        <span class="dd-lbl">Style</span>
-        <div class="dd-val" id="style-val">Filled</div>
+    <!-- Search -->
+    <div class="section" style="padding:10px 12px">
+      <div class="search-wrap">
+        <i class="ti ti-search si" aria-hidden="true"></i>
+        <input id="search-inp" type="text" placeholder="Search icons…"
+               autocomplete="off" spellcheck="false"
+               oninput="onSearch(this.value)">
+        <i class="ti ti-x sc" aria-label="Clear search" onclick="clearSearch()"></i>
       </div>
-      <i id="style-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
     </div>
-    <div id="style-body" class="dd-body section"></div>
-  </div>
 
-  <!-- Category dropdown -->
-  <div class="section">
-    <div class="dd-trigger" onclick="toggleDd('cat-body','cat-chev')">
-      <div class="dd-left">
-        <i class="ti ti-tag" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
-        <span class="dd-lbl">Category</span>
-        <div class="dd-val" id="cat-val">All</div>
+    <!-- Style dropdown -->
+    <div class="section">
+      <div class="dd-trigger" onclick="toggleDd('style-body','style-chev')">
+        <div class="dd-left">
+          <i class="ti ti-palette" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
+          <span class="dd-lbl">Style</span>
+          <div class="dd-val" id="style-val">Filled</div>
+        </div>
+        <i id="style-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
       </div>
-      <i id="cat-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
+      <div id="style-body" class="dd-body section"></div>
     </div>
-    <div id="cat-body" class="dd-body section"></div>
-  </div>
 
-  <!-- Results count -->
-  <div class="results-row section" style="padding-bottom:3px">
-    <span id="result-count">Loading…</span>
-    <div class="view-btns">
-      <i class="ti ti-layout-grid on" title="Grid view" aria-label="Grid view"></i>
-      <i class="ti ti-list"           title="List view" aria-label="List view"></i>
+    <!-- Category dropdown -->
+    <div class="section">
+      <div class="dd-trigger" onclick="toggleDd('cat-body','cat-chev')">
+        <div class="dd-left">
+          <i class="ti ti-tag" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
+          <span class="dd-lbl">Category</span>
+          <div class="dd-val" id="cat-val">All</div>
+        </div>
+        <i id="cat-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
+      </div>
+      <div id="cat-body" class="dd-body section"></div>
     </div>
-  </div>
 
-  <!-- Icon grid -->
-  <div id="icon-grid" role="list"></div>
+    <!-- Results count + view toggle -->
+    <div class="results-row section" style="padding-bottom:3px">
+      <span id="result-count">Loading…</span>
+      <div class="view-btns">
+        <i class="ti ti-layout-grid on" data-view="grid" onclick="setView('grid')" title="Grid view" aria-label="Grid view"></i>
+        <i class="ti ti-list"           data-view="list" onclick="setView('list')" title="List view" aria-label="List view"></i>
+      </div>
+    </div>
+
+  </div><!-- /top-panel -->
+
+  <!-- Scrollable icon grid -->
+  <div id="scroll-area">
+    <div id="icon-grid" role="list"></div>
+  </div>
 
   <!-- Selection / insert bar -->
   <div id="sel-bar" class="empty">
@@ -405,8 +443,18 @@ const LIBS = {
     styles: ['filled','outlined','rounded','sharp'],
     defaultStyle: 'filled',
     colorMode: 'fill',
+    pkg: '@material-design-icons/svg@0.14.13',
     svgUrl(icon, style) {
       return `${this.cdnBase}/${style}/${icon.name}.svg`;
+    },
+    metaUrl: 'https://unpkg.com/@material-design-icons/svg@0.14.13/filled/?meta',
+    parseFiles(files) {
+      return (files || [])
+        .filter(f => f.path && f.path.endsWith('.svg'))
+        .map(f => {
+          const name = f.path.split('/').pop().replace('.svg', '');
+          return { name, label: name.replace(/_/g, ' '), cat: guessCategory(name) };
+        });
     }
   },
   tabler: {
@@ -415,10 +463,20 @@ const LIBS = {
     styles: ['outline','filled'],
     defaultStyle: 'outline',
     colorMode: 'stroke',
+    pkg: '@tabler/icons@3.30.0',
     svgUrl(icon, style) {
       return style === 'filled'
         ? `${this.cdnBase}/icons/filled/${icon.name}.svg`
         : `${this.cdnBase}/icons/${icon.name}.svg`;
+    },
+    metaUrl: 'https://unpkg.com/@tabler/icons@3.30.0/icons/?meta',
+    parseFiles(files) {
+      return (files || [])
+        .filter(f => f.path && f.path.endsWith('.svg') && f.type === 'file')
+        .map(f => {
+          const name = f.path.split('/').pop().replace('.svg', '');
+          return { name, label: name.replace(/-/g, ' '), cat: guessCategory(name) };
+        });
     }
   },
   phosphor: {
@@ -427,8 +485,18 @@ const LIBS = {
     styles: ['thin','light','regular','bold','fill','duotone'],
     defaultStyle: 'regular',
     colorMode: 'fill',
+    pkg: '@phosphor-icons/core@2.1.1',
     svgUrl(icon, style) {
       return `${this.cdnBase}/${style}/${icon.name}.svg`;
+    },
+    metaUrl: 'https://unpkg.com/@phosphor-icons/core@2.1.1/assets/regular/?meta',
+    parseFiles(files) {
+      return (files || [])
+        .filter(f => f.path && f.path.endsWith('.svg'))
+        .map(f => {
+          const name = f.path.split('/').pop().replace('.svg', '');
+          return { name, label: name.replace(/-/g, ' '), cat: guessCategory(name) };
+        });
     }
   },
   fluent: {
@@ -437,8 +505,19 @@ const LIBS = {
     styles: ['regular','filled'],
     defaultStyle: 'regular',
     colorMode: 'fill',
+    pkg: '@fluentui/svg-icons@1.1.276',
     svgUrl(icon, style, size) {
       return `${this.cdnBase}/${icon.name}_${size}_${style}.svg`;
+    },
+    metaUrl: 'https://unpkg.com/@fluentui/svg-icons@1.1.276/icons/?meta',
+    parseFiles(files) {
+      return (files || [])
+        .filter(f => f.path && f.path.endsWith('_24_regular.svg'))
+        .map(f => {
+          const filename = f.path.split('/').pop();
+          const name = filename.slice(0, -15);
+          return { name, label: name.replace(/_/g, ' '), cat: guessCategory(name) };
+        });
     }
   }
 };
@@ -764,6 +843,7 @@ const EQUIV = {
 };
 
 function tablerFor(name) {
+  if (S.lib === 'tabler') return 'ti-' + name;
   return EQUIV[name] || 'ti-square';
 }
 
@@ -774,17 +854,78 @@ const S = {
   style:    'filled',
   category: 'all',
   query:    '',
-  selected: new Set(),   // Set of icon name strings
+  selected: new Set(),
   color:    '#1A1A1A',
   size:     24,
+  view:     'grid',
+  icons:    [],
   svgCache: {}
 };
+
+// ── Dynamic icon loading ─────────────────────────────────────────────────────
+
+const ICON_CACHE = {};
+const STYLE_PREFS = {};   // remembers style choice per library for the session
+
+// Keyword-based category guesser for dynamically loaded icon names
+function guessCategory(name) {
+  const n = name.toLowerCase();
+  if (/mail|phone|chat|message|send|inbox|notif|bell|announc|person|people|group|contact|user/.test(n)) return 'Communication';
+  if (/arrow|chevron|caret|menu|nav|map|location|pin|compass|direction|back|forward/.test(n))           return 'Navigation';
+  if (/file|folder|doc|cloud|download|upload|archive|attach|save|floppy|storage/.test(n))               return 'Files';
+  if (/chart|graph|bar|pie|trend|data|analytic|table|report|statistic|metric/.test(n))                  return 'Charts';
+  if (/camera|photo|image|video|music|play|pause|mic|volume|audio|speaker|film|record/.test(n))         return 'Media';
+  if (/desktop|mobile|tablet|watch|device|battery|wifi|bluetooth|usb|cpu|keyboard|hardware/.test(n))    return 'Devices';
+  if (/cart|shop|credit|payment|truck|shipping|store|package|bag|receipt|order/.test(n))                return 'Shopping';
+  if (/calendar|clock|time|alarm|schedule|event|date|timer/.test(n))                                    return 'Calendar';
+  if (/heart|star|thumb|favorite|bookmark|share|like|social|flag|rate/.test(n))                         return 'Social';
+  if (/lock|shield|key|security|password|private|encrypt|auth|safe/.test(n))                            return 'Security';
+  if (/edit|pencil|write|pen|draw|paint|brush|format|text|font/.test(n))                                return 'Editor';
+  if (/build|tool|wrench|gear|settings|config|code|terminal|debug/.test(n))                             return 'Development';
+  return 'General';
+}
+
+async function loadFullIconList(libId) {
+  // Already loaded and cached
+  if (ICON_CACHE[libId]) {
+    if (S.lib === libId) {
+      S.icons = ICON_CACHE[libId];
+      buildCatDropdown();
+      renderGrid();
+    }
+    return;
+  }
+
+  const lib = LIBS[libId];
+  if (!lib.metaUrl || !lib.parseFiles) return;
+
+  try {
+    const r = await fetch(lib.metaUrl);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const icons = lib.parseFiles(data.files || []);
+    if (!icons.length) throw new Error('empty list');
+    ICON_CACHE[libId] = icons;
+
+    if (S.lib === libId) {
+      // Reset category if it no longer exists in the loaded set
+      const newCats = [...new Set(icons.map(i => i.cat))];
+      if (S.category !== 'all' && !newCats.includes(S.category)) S.category = 'all';
+      S.icons = icons;
+      buildCatDropdown();
+      renderGrid();
+    }
+  } catch (e) {
+    console.warn('Full icon list load failed for ' + libId + ':', e.message);
+    // Seed data remains in S.icons — no action needed
+  }
+}
 
 // ── Filtered icon list ───────────────────────────────────────────────────
 
 function filtered() {
-  const all  = ICON_DATA[S.lib];
-  const q    = S.query.toLowerCase();
+  const all = S.icons;
+  const q   = S.query.toLowerCase();
   return all.filter(ic => {
     const catOk = S.category === 'all' || ic.cat === S.category;
     const qOk   = !q || ic.name.includes(q) || ic.label.includes(q) || ic.cat.toLowerCase().includes(q);
@@ -796,9 +937,10 @@ function filtered() {
 
 function switchLib(id) {
   S.lib      = id;
-  S.style    = LIBS[id].defaultStyle;
+  S.style    = STYLE_PREFS[id] || LIBS[id].defaultStyle;
   S.category = 'all';
   S.selected.clear();
+  S.icons    = ICON_DATA[id] || [];   // Show seed immediately
 
   document.querySelectorAll('.lib-tab').forEach(t =>
     t.classList.toggle('on', t.dataset.lib === id));
@@ -807,6 +949,8 @@ function switchLib(id) {
   buildCatDropdown();
   renderGrid();
   renderSelBar();
+
+  loadFullIconList(id);   // Upgrade to full list in background
 }
 
 // ── Dropdown helpers ─────────────────────────────────────────────────────
@@ -822,6 +966,13 @@ function toggleDd(bodyId, chevId) {
 function closeDds() {
   document.querySelectorAll('.dd-body').forEach(b => b.classList.remove('open'));
   document.querySelectorAll('.dd-chev').forEach(c => c.classList.remove('open'));
+}
+
+function setView(v) {
+  S.view = v;
+  document.getElementById('icon-grid').classList.toggle('list-view', v === 'list');
+  document.querySelectorAll('.view-btns i').forEach(i =>
+    i.classList.toggle('on', i.dataset.view === v));
 }
 
 // ── Style dropdown ───────────────────────────────────────────────────────
@@ -841,6 +992,7 @@ function buildStyleDropdown() {
 
 function pickStyle(s) {
   S.style = s;
+  STYLE_PREFS[S.lib] = s;   // remember per library
   document.getElementById('style-val').textContent = cap(s);
   document.querySelectorAll('#style-body .opt-row').forEach(r =>
     r.classList.toggle('active', r.dataset.style === s));
@@ -851,7 +1003,7 @@ function pickStyle(s) {
 // ── Category dropdown ────────────────────────────────────────────────────
 
 function buildCatDropdown() {
-  const cats = ['all', ...[...new Set(ICON_DATA[S.lib].map(i => i.cat))].sort()];
+  const cats = ['all', ...[...new Set(S.icons.map(i => i.cat))].sort()];
   document.getElementById('cat-val').textContent = S.category === 'all' ? 'All' : S.category;
   document.getElementById('cat-body').innerHTML =
     '<div style="padding:4px 0">' +
@@ -877,7 +1029,7 @@ function pickCat(c) {
 function renderGrid() {
   const grid  = document.getElementById('icon-grid');
   const icons = filtered();
-  const total = ICON_DATA[S.lib].length;
+  const total = S.icons.length;
 
   document.getElementById('result-count').textContent =
     `${icons.length} of ${total} icons`;
@@ -1042,6 +1194,27 @@ function colorizeSVG(svgText, color, colorMode, size) {
 
 // ── Office.js insertion ──────────────────────────────────────────────────
 
+// Build a single composite SVG containing all icons side by side.
+// Inserting one SVG lands everything together on the slide.
+function buildCompositeSVG(svgTexts, size) {
+  if (svgTexts.length === 1) return svgTexts[0];
+  const gap = Math.round(size * 0.5);
+  const total = svgTexts.length * size + (svgTexts.length - 1) * gap;
+  const parser = new DOMParser();
+  const serial = new XMLSerializer();
+  let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="${size}">`;
+  svgTexts.forEach((svgText, i) => {
+    const doc = parser.parseFromString(svgText, 'image/svg+xml');
+    const svg = doc.documentElement;
+    const vb  = svg.getAttribute('viewBox') || `0 0 ${size} ${size}`;
+    const x   = i * (size + gap);
+    out += `<svg x="${x}" y="0" width="${size}" height="${size}" viewBox="${vb}">`;
+    Array.from(svg.childNodes).forEach(n => { out += serial.serializeToString(n); });
+    out += `</svg>`;
+  });
+  return out + `</svg>`;
+}
+
 function insertSvgAsync(svgString) {
   return new Promise((resolve, reject) => {
     Office.context.document.setSelectedDataAsync(
@@ -1069,7 +1242,7 @@ async function insertSelected() {
   status.className   = '';
 
   const lib   = LIBS[S.lib];
-  const icons = ICON_DATA[S.lib].filter(ic => S.selected.has(ic.name));
+  const icons = S.icons.filter(ic => S.selected.has(ic.name));
   const errors = [];
 
   try {
@@ -1086,12 +1259,13 @@ async function insertSelected() {
 
     btn.textContent = 'Inserting…';
 
-    for (const ic of icons) {
-      if (!svgMap[ic.name]) continue;
+    const toInsert = icons.filter(ic => svgMap[ic.name]);
+    if (toInsert.length > 0) {
+      const composite = buildCompositeSVG(toInsert.map(ic => svgMap[ic.name]), S.size);
       try {
-        await insertSvgAsync(svgMap[ic.name]);
+        await insertSvgAsync(composite);
       } catch (e) {
-        errors.push(ic.label);
+        errors.push(...toInsert.map(ic => ic.label));
       }
     }
 
