@@ -29,10 +29,21 @@
 
     /* ── Panel header ─────────────────────────────────────── */
     #app-header {
-      padding: 5px 12px 4px;
-      font-size: 11px; font-weight: 600; color: #666;
+      padding: 6px 8px 6px 12px;
       background: #fff; border-bottom: 1px solid #e8e8e8;
+      display: flex; align-items: center; justify-content: space-between;
     }
+    #app-header .hdr-title {
+      font-size: 12px; font-weight: 700; color: #1a1a1a; letter-spacing: -.01em;
+    }
+    .hdr-btns { display: flex; gap: 2px; }
+    .hdr-btn {
+      width: 26px; height: 26px; border: none; background: none;
+      cursor: pointer; border-radius: 5px; color: #777; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hdr-btn:hover { background: #f0f0f0; color: #1a1a1a; }
+    .hdr-btn i { font-size: 16px; line-height: 1; }
 
     input, button, select { font-family: inherit; font-size: inherit; }
     button { cursor: pointer; }
@@ -93,14 +104,14 @@
     /* ── Dropdowns ────────────────────────────────────────── */
     .dd-trigger {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 12px; cursor: pointer; user-select: none;
+      padding: 7px 10px; cursor: pointer; user-select: none;
     }
     .dd-trigger:hover { background: #f5f5f5; }
     .dd-left { display: flex; align-items: center; gap: 6px; }
     .dd-lbl { font-size: 11px; color: #888; }
     .dd-val {
       font-size: 11px; background: #f0f0f0; border: 1px solid #e0e0e0;
-      border-radius: 999px; padding: 2px 8px; max-width: 140px;
+      border-radius: 999px; padding: 2px 7px; max-width: 90px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333;
     }
     .dd-chev { font-size: 12px; color: #aaa; transition: transform .15s; flex-shrink: 0; }
@@ -200,7 +211,7 @@
       border-top: 1px solid #e8e8e8;
       transition: opacity .15s;
     }
-    #sel-bar.empty { opacity: .4; pointer-events: none; }
+    /* sel-bar is always fully visible; only the insert button changes state */
 
     .sel-header {
       display: flex; align-items: center;
@@ -304,7 +315,7 @@
       font-size: 11px; text-align: center;
       margin-top: 6px; min-height: 16px; color: #888;
     }
-    #status.ok { color: #2e7d32; }
+    #status.ok { color: #1a1a1a; }
     #status.err { color: #c62828; }
   </style>
 </head>
@@ -315,7 +326,13 @@
   <!-- Fixed top panel -->
   <div id="top-panel">
 
-    <div id="app-header">Icon Panel &mdash; Google Material Icons</div>
+    <div id="app-header">
+      <span class="hdr-title">Icon Panel&#8482; <span style="font-weight:400;color:#888">by Themis</span></span>
+      <div class="hdr-btns">
+        <button class="hdr-btn" onclick="toggleAbout()" title="About"><i class="ti ti-info-circle" aria-hidden="true"></i></button>
+        <button class="hdr-btn" onclick="closePane()"   title="Close"><i class="ti ti-x"           aria-hidden="true"></i></button>
+      </div>
+    </div>
 
     <!-- Search -->
     <div class="section" style="padding:10px 12px">
@@ -328,31 +345,30 @@
       </div>
     </div>
 
-    <!-- Style dropdown -->
-    <div class="section">
-      <div class="dd-trigger" onclick="toggleDd('style-body','style-chev')">
-        <div class="dd-left">
-          <i class="ti ti-palette" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
-          <span class="dd-lbl">Style</span>
-          <div class="dd-val" id="style-val">Filled</div>
+    <!-- Style + Category in one row -->
+    <div style="display:flex;border-bottom:1px solid #e8e8e8">
+      <div style="flex:1;border-right:1px solid #e8e8e8">
+        <div class="dd-trigger" onclick="toggleDd('style-body','style-chev')">
+          <div class="dd-left">
+            <span class="dd-lbl">Style</span>
+            <div class="dd-val" id="style-val">Outlined</div>
+          </div>
+          <i id="style-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
         </div>
-        <i id="style-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
       </div>
-      <div id="style-body" class="dd-body section"></div>
-    </div>
-
-    <!-- Category dropdown -->
-    <div class="section">
-      <div class="dd-trigger" onclick="toggleDd('cat-body','cat-chev')">
-        <div class="dd-left">
-          <i class="ti ti-tag" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
-          <span class="dd-lbl">Category</span>
-          <div class="dd-val" id="cat-val">All</div>
+      <div style="flex:1">
+        <div class="dd-trigger" onclick="toggleDd('cat-body','cat-chev')">
+          <div class="dd-left">
+            <span class="dd-lbl">Category</span>
+            <div class="dd-val" id="cat-val">All</div>
+          </div>
+          <i id="cat-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
         </div>
-        <i id="cat-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
       </div>
-      <div id="cat-body" class="dd-body section"></div>
     </div>
+    <!-- Dropdown bodies — appear full-width below the trigger row -->
+    <div id="style-body" class="dd-body section"></div>
+    <div id="cat-body"   class="dd-body section"></div>
 
     <!-- Results count + preview size + view toggle -->
     <div class="results-row section" style="padding-bottom:3px">
@@ -379,7 +395,7 @@
   </div>
 
   <!-- Selection / insert bar -->
-  <div id="sel-bar" class="empty">
+  <div id="sel-bar">
 
     <div class="sel-header">
       <span id="sel-label">0 selected</span>
@@ -658,7 +674,7 @@ function tablerFor(name) {
 // so SVG img is the only approach that works consistently.
 function previewHTML(ic) {
   const src = LIBS[S.lib].svgUrl(ic, S.style, 24);
-  return `<img class="icn icn-img" loading="lazy" src="${src}" alt="">`;
+  return `<img class="icn icn-img" loading="lazy" src="${src}" width="${S.previewSize}" height="${S.previewSize}" alt="">`;
 }
 
 // ── Session state ────────────────────────────────────────────────────────
@@ -802,6 +818,7 @@ function setPreviewSize(px) {
   document.documentElement.style.setProperty('--preview-sz', px + 'px');
   document.querySelectorAll('.pzb').forEach(b =>
     b.classList.toggle('on', parseInt(b.dataset.size) === px));
+  renderGrid();
 }
 
 // ── Style dropdown ───────────────────────────────────────────────────────
@@ -814,7 +831,7 @@ function buildStyleDropdown() {
     styles.map(s => `
       <div class="opt-row ${s === S.style ? 'active' : ''}" data-style="${s}" onclick="pickStyle('${s}')">
         <span style="text-transform:capitalize">${s}</span>
-        <div class="opt-chk"><i class="ti ti-check"></i></div>
+        <i class="ti ti-check opt-tick"></i>
       </div>`).join('') +
     '</div>';
 }
@@ -918,8 +935,8 @@ function renderSelBar() {
   const bar = document.getElementById('sel-bar');
   const btn = document.getElementById('ins-btn');
 
-  bar.classList.toggle('empty', n === 0);
   btn.disabled = n === 0;
+  btn.style.opacity = n === 0 ? '.35' : '1';
   document.getElementById('sel-label').textContent =
     n === 1 ? '1 selected' : `${n} selected`;
   btn.textContent = n === 0
@@ -1116,6 +1133,27 @@ async function insertSelected() {
 // ── Utility ──────────────────────────────────────────────────────────────
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function closePane() {
+  try {
+    if (typeof Office !== 'undefined' && Office.addin && Office.addin.hide) {
+      Office.addin.hide();
+    } else {
+      window.close();
+    }
+  } catch (e) { window.close(); }
+}
+
+function toggleAbout() {
+  const st = document.getElementById('status');
+  if (st.textContent.startsWith('Icon Panel')) {
+    st.textContent = '';
+    st.className = '';
+  } else {
+    st.textContent = 'Icon Panel™ by Themis · Google Material Icons · v1.0';
+    st.className = '';
+  }
+}
 
 // ── Init ─────────────────────────────────────────────────────────────────
 
