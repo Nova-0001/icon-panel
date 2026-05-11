@@ -163,6 +163,10 @@
     .ip-cell:hover { background: #f0f0f0; }
     .ip-cell.sel { border-color: #0078d4; background: #dbeeff; }
     .ip-cell .icn { font-size: 20px; color: #333; line-height: 1; }
+    /* Material Icons font renders via text content of a span */
+    .mat-icn { font-size: 20px !important; line-height: 1 !important; display: block !important; width: auto !important; }
+    /* Phosphor icons */
+    .ph.icn, [class^="ph-"].icn { font-size: 20px; line-height: 1; }
     .ip-cell.sel .icn { color: #0078d4; }
     .ip-cell .lbl {
       font-size: 8.5px; color: #aaa; text-align: center;
@@ -469,14 +473,12 @@ const LIBS = {
         ? `${this.cdnBase}/icons/filled/${icon.name}.svg`
         : `${this.cdnBase}/icons/${icon.name}.svg`;
     },
-    metaUrl: 'https://unpkg.com/@tabler/icons@3.30.0/icons/?meta',
-    parseFiles(files) {
-      return (files || [])
-        .filter(f => f.path && f.path.endsWith('.svg') && f.type === 'file')
-        .map(f => {
-          const name = f.path.split('/').pop().replace('.svg', '');
-          return { name, label: name.replace(/-/g, ' '), cat: guessCategory(name) };
-        });
+    metaUrl: 'https://unpkg.com/@tabler/icons@3.30.0/tags.json',
+    useRawData: true,
+    parseFiles(data) {
+      return Object.keys(data || {}).map(name => ({
+        name, label: name.replace(/-/g, ' '), cat: guessCategory(name)
+      }));
     }
   },
   phosphor: {
@@ -847,6 +849,19 @@ function tablerFor(name) {
   return EQUIV[name] || 'ti-square';
 }
 
+// Returns preview HTML for a grid cell.
+// Tabler uses the bundled webfont (instant, no extra network call).
+// All other libraries lazy-load the actual SVG directly from the CDN.
+// Web font ligature rendering is unreliable in the Office WebView,
+// so SVG img is the only approach that works consistently.
+function previewHTML(ic) {
+  if (S.lib === 'tabler') {
+    return `<i class="ti ti-${ic.name} icn" aria-hidden="true"></i>`;
+  }
+  const src = LIBS[S.lib].svgUrl(ic, S.style, 24);
+  return `<img class="icn icn-img" loading="lazy" src="${src}" width="20" height="20" alt="">`;
+}
+
 // ── Session state ────────────────────────────────────────────────────────
 
 const S = {
@@ -900,10 +915,13 @@ async function loadFullIconList(libId) {
   if (!lib.metaUrl || !lib.parseFiles) return;
 
   try {
-    const r = await fetch(lib.metaUrl);
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const r = await fetch(lib.metaUrl, { signal: controller.signal });
+    clearTimeout(tid);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
-    const icons = lib.parseFiles(data.files || []);
+    const icons = lib.useRawData ? lib.parseFiles(data) : lib.parseFiles(data.files || []);
     if (!icons.length) throw new Error('empty list');
     ICON_CACHE[libId] = icons;
 
@@ -951,6 +969,10 @@ function switchLib(id) {
   renderSelBar();
 
   loadFullIconList(id);   // Upgrade to full list in background
+  if (!ICON_CACHE[id]) {
+    const rc = document.getElementById('result-count');
+    rc.textContent = rc.textContent + '  (loading full list…)';
+  }
 }
 
 // ── Dropdown helpers ─────────────────────────────────────────────────────
@@ -1048,7 +1070,7 @@ function renderGrid() {
     cell.dataset.name = ic.name;
     cell.innerHTML =
       `<div class="chk-badge"><i class="ti ti-check" aria-hidden="true"></i></div>` +
-      `<i class="ti ${tablerFor(ic.name)} icn" aria-hidden="true"></i>` +
+      previewHTML(ic) +
       `<span class="lbl">${ic.label}</span>`;
     cell.addEventListener('click', () => {
       closeDds();
