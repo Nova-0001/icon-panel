@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Icon Panel</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      background: #ffffff;
+      color: #1a1a1a;
+      overflow-x: hidden;
+    }
+
+    input, button, select { font-family: inherit; font-size: inherit; }
+    button { cursor: pointer; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 2px; }
+
+    /* ── Library tabs ─────────────────────────────────────── */
+    .lib-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e5e5;
+      background: #fafafa;
+    }
+    .lib-tab {
+      flex: 1;
+      padding: 7px 2px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      line-height: 1.4;
+      transition: color .1s;
+      user-select: none;
+    }
+    .lib-tab:hover { color: #555; background: #f0f0f0; }
+    .lib-tab.on { color: #0078d4; border-bottom-color: #0078d4; }
+
+    /* ── Section dividers ─────────────────────────────────── */
+    .section { border-bottom: 1px solid #e8e8e8; }
+
+    /* ── Search ───────────────────────────────────────────── */
+    .search-wrap { position: relative; }
+    .search-wrap input {
+      width: 100%;
+      padding: 6px 28px 6px 28px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+      background: #fff;
+      color: #1a1a1a;
+    }
+    .search-wrap input:focus { border-color: #0078d4; }
+    .search-wrap .si {
+      position: absolute; left: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px; color: #aaa; pointer-events: none;
+    }
+    .search-wrap .sc {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px; color: #aaa;
+    }
+    .search-wrap .sc:hover { color: #555; }
+
+    /* ── Dropdowns ────────────────────────────────────────── */
+    .dd-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 12px; cursor: pointer; user-select: none;
+    }
+    .dd-trigger:hover { background: #f5f5f5; }
+    .dd-left { display: flex; align-items: center; gap: 6px; }
+    .dd-lbl { font-size: 11px; color: #888; }
+    .dd-val {
+      font-size: 11px; background: #f0f0f0; border: 1px solid #e0e0e0;
+      border-radius: 999px; padding: 2px 8px; max-width: 140px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333;
+    }
+    .dd-chev { font-size: 12px; color: #aaa; transition: transform .15s; flex-shrink: 0; }
+    .dd-chev.open { transform: rotate(180deg); }
+    .dd-body { display: none; background: #fafafa; }
+    .dd-body.open { display: block; }
+    .opt-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 12px; cursor: pointer; font-size: 12px; color: #1a1a1a;
+    }
+    .opt-row:hover { background: #efefef; }
+    .opt-chk {
+      width: 14px; height: 14px; border-radius: 3px;
+      border: 1.5px solid #ccc; background: #fff;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .opt-chk i { font-size: 9px; color: #0078d4; display: none; }
+    .opt-row.active .opt-chk { background: #dbeeff; border-color: #0078d4; }
+    .opt-row.active .opt-chk i { display: block; }
+    .opt-tick { font-size: 12px; color: #0078d4; visibility: hidden; }
+    .opt-row.active .opt-tick { visibility: visible; }
+
+    /* ── Results row ──────────────────────────────────────── */
+    .results-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 12px 3px;
+    }
+    .results-row span { font-size: 11px; color: #aaa; }
+    .view-btns { display: flex; gap: 6px; }
+    .view-btns i { font-size: 14px; color: #aaa; cursor: pointer; }
+    .view-btns i.on { color: #333; }
+
+    /* ── Icon grid ────────────────────────────────────────── */
+    #icon-grid {
+      padding: 4px 8px 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      min-height: 100px;
+    }
+
+    .ip-cell {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 7px 2px 5px;
+      border-radius: 5px; cursor: pointer;
+      border: 1.5px solid transparent;
+      gap: 3px; position: relative; user-select: none;
+    }
+    .ip-cell:hover { background: #f0f0f0; }
+    .ip-cell.sel { border-color: #0078d4; background: #dbeeff; }
+    .ip-cell .icn { font-size: 20px; color: #333; line-height: 1; }
+    .ip-cell.sel .icn { color: #0078d4; }
+    .ip-cell .lbl {
+      font-size: 8.5px; color: #aaa; text-align: center;
+      width: 50px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; line-height: 1;
+    }
+    .ip-cell.sel .lbl { color: #0078d4; }
+    .chk-badge {
+      position: absolute; top: 2px; right: 2px;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #dbeeff; border: 1.5px solid #0078d4;
+      display: none; align-items: center; justify-content: center;
+    }
+    .chk-badge i { font-size: 8px; color: #0078d4; }
+    .ip-cell.sel .chk-badge { display: flex; }
+
+    .grid-msg {
+      grid-column: 1 / -1;
+      text-align: center; padding: 2rem 1rem;
+      font-size: 12px; color: #aaa;
+    }
+
+    /* ── Selection bar ────────────────────────────────────── */
+    #sel-bar {
+      padding: 10px 12px;
+      background: #fafafa;
+      border-top: 1px solid #e8e8e8;
+      transition: opacity .15s;
+    }
+    #sel-bar.empty { opacity: .4; pointer-events: none; }
+
+    .sel-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 8px;
+    }
+    .sel-header span { font-size: 11px; font-weight: 600; color: #333; }
+    .sel-header button {
+      font-size: 11px; color: #888; background: none;
+      border: none; padding: 0;
+    }
+    .sel-header button:hover { color: #333; }
+
+    .preview-strip {
+      display: flex; gap: 4px; margin-bottom: 10px;
+      min-height: 34px; align-items: center; flex-wrap: wrap;
+    }
+    .prev-chip {
+      width: 32px; height: 32px; background: #fff;
+      border: 1px solid #e0e0e0; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; flex-shrink: 0;
+    }
+    .prev-chip i { font-size: 16px; color: #333; }
+    .prev-chip .rm {
+      position: absolute; top: -4px; right: -4px;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #888; display: flex; align-items: center;
+      justify-content: center; cursor: pointer;
+    }
+    .prev-chip .rm:hover { background: #444; }
+    .prev-chip .rm i { font-size: 8px; color: #fff; }
+
+    /* ── Size buttons ─────────────────────────────────────── */
+    .ctrl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; }
+    .ctrl-lbl { font-size: 11px; color: #888; width: 36px; flex-shrink: 0; }
+    .szb {
+      width: 32px; height: 24px; border-radius: 4px;
+      font-size: 10px; border: 1px solid #ddd;
+      background: transparent; color: #777;
+      padding: 0; display: inline-flex;
+      align-items: center; justify-content: center; line-height: 1;
+    }
+    .szb:hover { background: #f0f0f0; }
+    .szb.on { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+    /* ── Color ────────────────────────────────────────────── */
+    .color-block { display: flex; gap: 6px; margin-bottom: 10px; }
+    .color-block .ctrl-lbl { padding-top: 4px; }
+    .color-inner { flex: 1; }
+
+    .swatches { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
+    .cdot {
+      width: 16px; height: 16px; border-radius: 50%;
+      cursor: pointer; box-sizing: border-box;
+      border: 2px solid transparent; flex-shrink: 0;
+    }
+    .cdot:hover { transform: scale(1.15); }
+    .cdot.on { outline: 2px solid #0078d4; outline-offset: 2px; }
+
+    .hex-row { display: flex; align-items: center; gap: 5px; }
+    .hex-box {
+      display: flex; align-items: center;
+      border: 1px solid #ddd; border-radius: 4px;
+      flex: 1; overflow: hidden; background: #fff;
+    }
+    .hex-box:focus-within { border-color: #0078d4; }
+    .hex-swatch { width: 22px; height: 26px; flex-shrink: 0; border-right: 1px solid #ddd; }
+    .hex-hash { font-size: 11px; color: #aaa; padding: 0 2px 0 5px; }
+    .hex-inp {
+      flex: 1; min-width: 0;
+      font-size: 11px; font-family: 'Courier New', monospace;
+      border: none; background: transparent;
+      padding: 4px 4px 4px 0; color: #1a1a1a; outline: none;
+      text-transform: uppercase;
+    }
+    .picker-btn {
+      width: 28px; height: 28px; flex-shrink: 0;
+      border: 1px solid #ddd; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; background: #fff;
+    }
+    .picker-btn:hover { background: #f5f5f5; }
+    .picker-btn i { font-size: 14px; color: #888; pointer-events: none; }
+    .picker-btn input[type=color] {
+      opacity: 0; position: absolute; inset: 0;
+      width: 100%; height: 100%; cursor: pointer; border: none; padding: 0;
+    }
+
+    /* ── Insert button ────────────────────────────────────── */
+    #ins-btn {
+      width: 100%; padding: 7px; font-size: 12px; font-weight: 600;
+      border-radius: 5px; background: #0078d4; color: #fff; border: none;
+      margin-top: 2px;
+    }
+    #ins-btn:not(:disabled):hover { background: #106ebe; }
+    #ins-btn:disabled { opacity: .35; cursor: default; }
+
+    #status {
+      font-size: 11px; text-align: center;
+      margin-top: 6px; min-height: 16px; color: #888;
+    }
+    #status.ok { color: #2e7d32; }
+    #status.err { color: #c62828; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Library tabs -->
+  <div class="lib-tabs">
+    <div class="lib-tab on"  data-lib="material"  onclick="switchLib('material')">Material<br>Icons</div>
+    <div class="lib-tab"     data-lib="tabler"     onclick="switchLib('tabler')">Tabler<br>Icons</div>
+    <div class="lib-tab"     data-lib="phosphor"   onclick="switchLib('phosphor')">Phosphor<br>Icons</div>
+    <div class="lib-tab"     data-lib="fluent"     onclick="switchLib('fluent')">Fluent UI<br>Icons</div>
+  </div>
+
+  <!-- Search -->
+  <div class="section" style="padding:10px 12px">
+    <div class="search-wrap">
+      <i class="ti ti-search si" aria-hidden="true"></i>
+      <input id="search-inp" type="text" placeholder="Search icons…"
+             autocomplete="off" spellcheck="false"
+             oninput="onSearch(this.value)">
+      <i class="ti ti-x sc" aria-label="Clear search" onclick="clearSearch()"></i>
+    </div>
+  </div>
+
+  <!-- Style dropdown -->
+  <div class="section">
+    <div class="dd-trigger" onclick="toggleDd('style-body','style-chev')">
+      <div class="dd-left">
+        <i class="ti ti-palette" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
+        <span class="dd-lbl">Style</span>
+        <div class="dd-val" id="style-val">Filled</div>
+      </div>
+      <i id="style-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
+    </div>
+    <div id="style-body" class="dd-body section"></div>
+  </div>
+
+  <!-- Category dropdown -->
+  <div class="section">
+    <div class="dd-trigger" onclick="toggleDd('cat-body','cat-chev')">
+      <div class="dd-left">
+        <i class="ti ti-tag" style="font-size:13px;color:#aaa" aria-hidden="true"></i>
+        <span class="dd-lbl">Category</span>
+        <div class="dd-val" id="cat-val">All</div>
+      </div>
+      <i id="cat-chev" class="ti ti-chevron-down dd-chev" aria-hidden="true"></i>
+    </div>
+    <div id="cat-body" class="dd-body section"></div>
+  </div>
+
+  <!-- Results count -->
+  <div class="results-row section" style="padding-bottom:3px">
+    <span id="result-count">Loading…</span>
+    <div class="view-btns">
+      <i class="ti ti-layout-grid on" title="Grid view" aria-label="Grid view"></i>
+      <i class="ti ti-list"           title="List view" aria-label="List view"></i>
+    </div>
+  </div>
+
+  <!-- Icon grid -->
+  <div id="icon-grid" role="list"></div>
+
+  <!-- Selection / insert bar -->
+  <div id="sel-bar" class="empty">
+
+    <div class="sel-header">
+      <span id="sel-label">0 selected</span>
+      <button onclick="clearAll()">Clear all</button>
+    </div>
+
+    <div id="preview-strip" class="preview-strip">
+      <span id="strip-ph" style="font-size:11px;color:#bbb">Tap icons above to select</span>
+    </div>
+
+    <!-- Size -->
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">Size</span>
+      <div style="display:flex;gap:3px">
+        <button class="szb"    onclick="setSize(16,this)">16</button>
+        <button class="szb"    onclick="setSize(20,this)">20</button>
+        <button class="szb on" onclick="setSize(24,this)">24</button>
+        <button class="szb"    onclick="setSize(32,this)">32</button>
+        <button class="szb"    onclick="setSize(48,this)">48</button>
+      </div>
+    </div>
+
+    <!-- Color -->
+    <div class="color-block">
+      <span class="ctrl-lbl">Color</span>
+      <div class="color-inner">
+        <div class="swatches">
+          <div class="cdot on"   style="background:#1A1A1A" onclick="swatchClick(this,'#1A1A1A')" title="Black"></div>
+          <div class="cdot"      style="background:#757575" onclick="swatchClick(this,'#757575')" title="Gray"></div>
+          <div class="cdot"      style="background:#0078D4" onclick="swatchClick(this,'#0078D4')" title="Blue"></div>
+          <div class="cdot"      style="background:#D32F2F" onclick="swatchClick(this,'#D32F2F')" title="Red"></div>
+          <div class="cdot"      style="background:#388E3C" onclick="swatchClick(this,'#388E3C')" title="Green"></div>
+          <div class="cdot"      style="background:#F57C00" onclick="swatchClick(this,'#F57C00')" title="Orange"></div>
+        </div>
+        <div class="hex-row">
+          <div class="hex-box">
+            <div class="hex-swatch" id="hex-swatch" style="background:#1A1A1A"></div>
+            <span class="hex-hash">#</span>
+            <input class="hex-inp" id="hex-inp" type="text" maxlength="6"
+                   value="1A1A1A" spellcheck="false" aria-label="Hex colour"
+                   oninput="onHexInput(this.value)">
+          </div>
+          <div class="picker-btn" title="Open colour picker">
+            <i class="ti ti-color-swatch" aria-hidden="true"></i>
+            <input type="color" id="clr-picker" value="#1a1a1a"
+                   aria-label="Colour picker" oninput="onPickerInput(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="ins-btn" disabled onclick="insertSelected()">
+      Insert icons into slide
+    </button>
+    <div id="status"></div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Library configurations ───────────────────────────────────────────────
+
+const LIBS = {
+  material: {
+    name: 'Material Icons',
+    cdnBase: 'https://unpkg.com/@material-design-icons/svg@0.14.13',
+    styles: ['filled','outlined','rounded','sharp'],
+    defaultStyle: 'filled',
+    colorMode: 'fill',
+    svgUrl(icon, style) {
+      return `${this.cdnBase}/${style}/${icon.name}.svg`;
+    }
+  },
+  tabler: {
+    name: 'Tabler Icons',
+    cdnBase: 'https://unpkg.com/@tabler/icons@3.30.0',
+    styles: ['outline','filled'],
+    defaultStyle: 'outline',
+    colorMode: 'stroke',
+    svgUrl(icon, style) {
+      return style === 'filled'
+        ? `${this.cdnBase}/icons/filled/${icon.name}.svg`
+        : `${this.cdnBase}/icons/${icon.name}.svg`;
+    }
+  },
+  phosphor: {
+    name: 'Phosphor Icons',
+    cdnBase: 'https://unpkg.com/@phosphor-icons/core@2.1.1/assets',
+    styles: ['thin','light','regular','bold','fill','duotone'],
+    defaultStyle: 'regular',
+    colorMode: 'fill',
+    svgUrl(icon, style) {
+      return `${this.cdnBase}/${style}/${icon.name}.svg`;
+    }
+  },
+  fluent: {
+    name: 'Fluent UI Icons',
+    cdnBase: 'https://unpkg.com/@fluentui/svg-icons@1.1.276/icons',
+    styles: ['regular','filled'],
+    defaultStyle: 'regular',
+    colorMode: 'fill',
+    svgUrl(icon, style, size) {
+      return `${this.cdnBase}/${icon.name}_${size}_${style}.svg`;
+    }
+  }
+};
+
+// ── Icon data ────────────────────────────────────────────────────────────
+// Each entry: { name, label, cat }
+// name  = exact filename stem used in the library CDN
+// label = short display name shown under the icon
+// cat   = category for filtering
+
+const ICON_DATA = {
+
+  material: [
+    {name:'home',label:'home',cat:'Action'},{name:'search',label:'search',cat:'Action'},
+    {name:'settings',label:'settings',cat:'Action'},{name:'info',label:'info',cat:'Action'},
+    {name:'help',label:'help',cat:'Action'},{name:'build',label:'build',cat:'Action'},
+    {name:'code',label:'code',cat:'Action'},{name:'dashboard',label:'dashboard',cat:'Action'},
+    {name:'visibility',label:'visibility',cat:'Action'},{name:'visibility_off',label:'hidden',cat:'Action'},
+    {name:'lock',label:'lock',cat:'Action'},{name:'lock_open',label:'unlock',cat:'Action'},
+    {name:'delete',label:'delete',cat:'Action'},{name:'print',label:'print',cat:'Action'},
+    {name:'download',label:'download',cat:'Action'},{name:'upload',label:'upload',cat:'Action'},
+    {name:'bookmark',label:'bookmark',cat:'Action'},{name:'flag',label:'flag',cat:'Action'},
+    {name:'save',label:'save',cat:'Action'},{name:'warning',label:'warning',cat:'Action'},
+    {name:'check_circle',label:'check',cat:'Action'},{name:'account_circle',label:'account',cat:'Action'},
+    {name:'mail',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
+    {name:'chat',label:'chat',cat:'Communication'},{name:'send',label:'send',cat:'Communication'},
+    {name:'reply',label:'reply',cat:'Communication'},{name:'inbox',label:'inbox',cat:'Communication'},
+    {name:'notifications',label:'notify',cat:'Communication'},{name:'group',label:'group',cat:'Communication'},
+    {name:'comment',label:'comment',cat:'Communication'},{name:'forum',label:'forum',cat:'Communication'},
+    {name:'question_answer',label:'q / a',cat:'Communication'},{name:'announcement',label:'announce',cat:'Communication'},
+    {name:'add',label:'add',cat:'Content'},{name:'remove',label:'remove',cat:'Content'},
+    {name:'close',label:'close',cat:'Content'},{name:'edit',label:'edit',cat:'Content'},
+    {name:'link',label:'link',cat:'Content'},{name:'share',label:'share',cat:'Content'},
+    {name:'label',label:'label',cat:'Content'},{name:'attachment',label:'attach',cat:'Content'},
+    {name:'archive',label:'archive',cat:'Content'},{name:'filter_list',label:'filter',cat:'Content'},
+    {name:'sort',label:'sort',cat:'Content'},{name:'content_copy',label:'copy',cat:'Content'},
+    {name:'favorite',label:'favorite',cat:'Social'},{name:'star',label:'star',cat:'Social'},
+    {name:'thumb_up',label:'thumb up',cat:'Social'},{name:'thumb_down',label:'thumb dn',cat:'Social'},
+    {name:'person',label:'person',cat:'Social'},{name:'people',label:'people',cat:'Social'},
+    {name:'menu',label:'menu',cat:'Navigation'},{name:'arrow_back',label:'back',cat:'Navigation'},
+    {name:'arrow_forward',label:'forward',cat:'Navigation'},{name:'place',label:'place',cat:'Navigation'},
+    {name:'map',label:'map',cat:'Navigation'},{name:'language',label:'language',cat:'Navigation'},
+    {name:'public',label:'public',cat:'Navigation'},{name:'expand_more',label:'expand',cat:'Navigation'},
+    {name:'camera',label:'camera',cat:'AV'},{name:'image',label:'image',cat:'AV'},
+    {name:'videocam',label:'video',cat:'AV'},{name:'music_note',label:'music',cat:'AV'},
+    {name:'play_circle',label:'play',cat:'AV'},{name:'pause',label:'pause',cat:'AV'},
+    {name:'volume_up',label:'volume',cat:'AV'},{name:'mic',label:'mic',cat:'AV'},
+    {name:'insert_drive_file',label:'file',cat:'File'},{name:'folder',label:'folder',cat:'File'},
+    {name:'folder_open',label:'folder opn',cat:'File'},{name:'cloud',label:'cloud',cat:'File'},
+    {name:'cloud_upload',label:'cloud up',cat:'File'},{name:'cloud_download',label:'cloud dn',cat:'File'},
+    {name:'computer',label:'computer',cat:'Hardware'},{name:'smartphone',label:'phone',cat:'Hardware'},
+    {name:'tablet',label:'tablet',cat:'Hardware'},{name:'watch',label:'watch',cat:'Hardware'},
+    {name:'battery_full',label:'battery',cat:'Hardware'},{name:'wifi',label:'wifi',cat:'Hardware'},
+    {name:'bluetooth',label:'bluetooth',cat:'Hardware'},{name:'usb',label:'usb',cat:'Hardware'},
+    {name:'bar_chart',label:'bar chart',cat:'Charts'},{name:'pie_chart',label:'pie chart',cat:'Charts'},
+    {name:'show_chart',label:'line chart',cat:'Charts'},{name:'timeline',label:'timeline',cat:'Charts'},
+    {name:'table_chart',label:'table',cat:'Charts'},{name:'assessment',label:'report',cat:'Charts'},
+    {name:'shopping_cart',label:'cart',cat:'Shopping'},{name:'payment',label:'payment',cat:'Shopping'},
+    {name:'credit_card',label:'credit',cat:'Shopping'},{name:'local_shipping',label:'shipping',cat:'Shopping'},
+    {name:'storefront',label:'store',cat:'Shopping'},{name:'inventory',label:'inventory',cat:'Shopping'},
+    {name:'calendar_today',label:'calendar',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
+    {name:'schedule',label:'schedule',cat:'Calendar'},{name:'event',label:'event',cat:'Calendar'},
+  ],
+
+  tabler: [
+    {name:'home',label:'home',cat:'General'},{name:'search',label:'search',cat:'General'},
+    {name:'settings',label:'settings',cat:'General'},{name:'info-circle',label:'info',cat:'General'},
+    {name:'help-circle',label:'help',cat:'General'},{name:'alert-circle',label:'alert',cat:'General'},
+    {name:'tool',label:'tool',cat:'General'},{name:'code',label:'code',cat:'General'},
+    {name:'eye',label:'eye',cat:'General'},{name:'eye-off',label:'eye off',cat:'General'},
+    {name:'lock',label:'lock',cat:'General'},{name:'lock-open',label:'unlock',cat:'General'},
+    {name:'trash',label:'trash',cat:'General'},{name:'edit',label:'edit',cat:'General'},
+    {name:'refresh',label:'refresh',cat:'General'},{name:'copy',label:'copy',cat:'General'},
+    {name:'check',label:'check',cat:'General'},{name:'x',label:'close',cat:'General'},
+    {name:'plus',label:'plus',cat:'General'},{name:'minus',label:'minus',cat:'General'},
+    {name:'mail',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
+    {name:'message',label:'message',cat:'Communication'},{name:'send',label:'send',cat:'Communication'},
+    {name:'inbox',label:'inbox',cat:'Communication'},{name:'bell',label:'bell',cat:'Communication'},
+    {name:'users',label:'users',cat:'Communication'},{name:'user',label:'user',cat:'Communication'},
+    {name:'message-dots',label:'msg dots',cat:'Communication'},{name:'speakerphone',label:'announce',cat:'Communication'},
+    {name:'file',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
+    {name:'download',label:'download',cat:'Files'},{name:'upload',label:'upload',cat:'Files'},
+    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud-download',label:'cloud dn',cat:'Files'},
+    {name:'cloud-upload',label:'cloud up',cat:'Files'},{name:'device-floppy',label:'floppy',cat:'Files'},
+    {name:'paperclip',label:'attach',cat:'Files'},{name:'archive',label:'archive',cat:'Files'},
+    {name:'arrow-right',label:'right',cat:'Navigation'},{name:'arrow-left',label:'left',cat:'Navigation'},
+    {name:'arrow-up',label:'up',cat:'Navigation'},{name:'arrow-down',label:'down',cat:'Navigation'},
+    {name:'chevron-right',label:'chevron rt',cat:'Navigation'},{name:'menu-2',label:'menu',cat:'Navigation'},
+    {name:'map',label:'map',cat:'Navigation'},{name:'map-pin',label:'pin',cat:'Navigation'},
+    {name:'world',label:'world',cat:'Navigation'},{name:'compass',label:'compass',cat:'Navigation'},
+    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
+    {name:'thumb-up',label:'thumb up',cat:'Social'},{name:'thumb-down',label:'thumb dn',cat:'Social'},
+    {name:'share',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
+    {name:'bookmark',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
+    {name:'camera',label:'camera',cat:'Media'},{name:'photo',label:'photo',cat:'Media'},
+    {name:'video',label:'video',cat:'Media'},{name:'music',label:'music',cat:'Media'},
+    {name:'player-play',label:'play',cat:'Media'},{name:'player-pause',label:'pause',cat:'Media'},
+    {name:'microphone',label:'mic',cat:'Media'},{name:'volume',label:'volume',cat:'Media'},
+    {name:'device-desktop',label:'desktop',cat:'Devices'},{name:'device-mobile',label:'mobile',cat:'Devices'},
+    {name:'device-tablet',label:'tablet',cat:'Devices'},{name:'watch',label:'watch',cat:'Devices'},
+    {name:'battery',label:'battery',cat:'Devices'},{name:'wifi',label:'wifi',cat:'Devices'},
+    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'cpu',label:'cpu',cat:'Devices'},
+    {name:'chart-bar',label:'bar',cat:'Charts'},{name:'chart-pie',label:'pie',cat:'Charts'},
+    {name:'chart-line',label:'line',cat:'Charts'},{name:'chart-area',label:'area',cat:'Charts'},
+    {name:'table',label:'table',cat:'Charts'},{name:'report-analytics',label:'analytics',cat:'Charts'},
+    {name:'shopping-cart',label:'cart',cat:'Shopping'},{name:'credit-card',label:'credit',cat:'Shopping'},
+    {name:'package',label:'package',cat:'Shopping'},{name:'truck',label:'truck',cat:'Shopping'},
+    {name:'building-store',label:'store',cat:'Shopping'},{name:'receipt',label:'receipt',cat:'Shopping'},
+    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
+    {name:'calendar-event',label:'event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
+  ],
+
+  phosphor: [
+    {name:'house',label:'house',cat:'General'},{name:'magnifying-glass',label:'search',cat:'General'},
+    {name:'gear',label:'gear',cat:'General'},{name:'info',label:'info',cat:'General'},
+    {name:'question',label:'question',cat:'General'},{name:'warning',label:'warning',cat:'General'},
+    {name:'bug',label:'bug',cat:'General'},{name:'wrench',label:'wrench',cat:'General'},
+    {name:'code',label:'code',cat:'General'},{name:'eye',label:'eye',cat:'General'},
+    {name:'eye-slash',label:'eye off',cat:'General'},{name:'lock',label:'lock',cat:'General'},
+    {name:'lock-open',label:'unlock',cat:'General'},{name:'trash',label:'trash',cat:'General'},
+    {name:'pencil-simple',label:'edit',cat:'General'},{name:'copy',label:'copy',cat:'General'},
+    {name:'check',label:'check',cat:'General'},{name:'x',label:'close',cat:'General'},
+    {name:'plus',label:'plus',cat:'General'},{name:'minus',label:'minus',cat:'General'},
+    {name:'envelope',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
+    {name:'chat',label:'chat',cat:'Communication'},{name:'paper-plane-right',label:'send',cat:'Communication'},
+    {name:'tray',label:'inbox',cat:'Communication'},{name:'bell',label:'bell',cat:'Communication'},
+    {name:'users',label:'users',cat:'Communication'},{name:'user',label:'user',cat:'Communication'},
+    {name:'chat-centered-dots',label:'chat dots',cat:'Communication'},{name:'megaphone',label:'announce',cat:'Communication'},
+    {name:'file',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
+    {name:'download-simple',label:'download',cat:'Files'},{name:'upload-simple',label:'upload',cat:'Files'},
+    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud-arrow-down',label:'cloud dn',cat:'Files'},
+    {name:'cloud-arrow-up',label:'cloud up',cat:'Files'},{name:'floppy-disk',label:'floppy',cat:'Files'},
+    {name:'paperclip',label:'attach',cat:'Files'},{name:'archive-box',label:'archive',cat:'Files'},
+    {name:'arrow-right',label:'right',cat:'Navigation'},{name:'arrow-left',label:'left',cat:'Navigation'},
+    {name:'arrow-up',label:'up',cat:'Navigation'},{name:'arrow-down',label:'down',cat:'Navigation'},
+    {name:'list',label:'menu',cat:'Navigation'},{name:'map-pin',label:'pin',cat:'Navigation'},
+    {name:'globe',label:'globe',cat:'Navigation'},{name:'compass',label:'compass',cat:'Navigation'},
+    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
+    {name:'thumbs-up',label:'thumb up',cat:'Social'},{name:'thumbs-down',label:'thumb dn',cat:'Social'},
+    {name:'share-network',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
+    {name:'bookmark-simple',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
+    {name:'camera',label:'camera',cat:'Media'},{name:'image',label:'image',cat:'Media'},
+    {name:'video-camera',label:'video',cat:'Media'},{name:'music-note',label:'music',cat:'Media'},
+    {name:'play-circle',label:'play',cat:'Media'},{name:'pause-circle',label:'pause',cat:'Media'},
+    {name:'microphone',label:'mic',cat:'Media'},{name:'speaker-high',label:'volume',cat:'Media'},
+    {name:'desktop',label:'desktop',cat:'Devices'},{name:'device-mobile',label:'mobile',cat:'Devices'},
+    {name:'device-tablet',label:'tablet',cat:'Devices'},{name:'watch',label:'watch',cat:'Devices'},
+    {name:'battery-full',label:'battery',cat:'Devices'},{name:'wifi-high',label:'wifi',cat:'Devices'},
+    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'cpu',label:'cpu',cat:'Devices'},
+    {name:'chart-bar',label:'bar',cat:'Charts'},{name:'chart-pie',label:'pie',cat:'Charts'},
+    {name:'chart-line',label:'line',cat:'Charts'},{name:'chart-line-up',label:'trend',cat:'Charts'},
+    {name:'table',label:'table',cat:'Charts'},{name:'trend-up',label:'trend up',cat:'Charts'},
+    {name:'shopping-cart',label:'cart',cat:'Shopping'},{name:'credit-card',label:'credit',cat:'Shopping'},
+    {name:'package',label:'package',cat:'Shopping'},{name:'truck',label:'truck',cat:'Shopping'},
+    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
+    {name:'calendar-plus',label:'new event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
+  ],
+
+  fluent: [
+    {name:'home',label:'home',cat:'General'},{name:'search',label:'search',cat:'General'},
+    {name:'settings',label:'settings',cat:'General'},{name:'info',label:'info',cat:'General'},
+    {name:'question_circle',label:'help',cat:'General'},{name:'warning',label:'warning',cat:'General'},
+    {name:'bug',label:'bug',cat:'General'},{name:'wrench_screwdriver',label:'tools',cat:'General'},
+    {name:'code',label:'code',cat:'General'},{name:'eye',label:'eye',cat:'General'},
+    {name:'eye_off',label:'eye off',cat:'General'},{name:'lock_closed',label:'lock',cat:'General'},
+    {name:'lock_open',label:'unlock',cat:'General'},{name:'delete',label:'delete',cat:'General'},
+    {name:'edit',label:'edit',cat:'General'},{name:'copy',label:'copy',cat:'General'},
+    {name:'checkmark',label:'check',cat:'General'},{name:'dismiss',label:'close',cat:'General'},
+    {name:'add',label:'add',cat:'General'},{name:'subtract',label:'subtract',cat:'General'},
+    {name:'mail',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
+    {name:'chat',label:'chat',cat:'Communication'},{name:'send',label:'send',cat:'Communication'},
+    {name:'mail_inbox',label:'inbox',cat:'Communication'},{name:'alert',label:'alert',cat:'Communication'},
+    {name:'people',label:'people',cat:'Communication'},{name:'person',label:'person',cat:'Communication'},
+    {name:'chat_bubbles_question',label:'q / a',cat:'Communication'},{name:'megaphone',label:'announce',cat:'Communication'},
+    {name:'document',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
+    {name:'arrow_download',label:'download',cat:'Files'},{name:'arrow_upload',label:'upload',cat:'Files'},
+    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud_download',label:'cloud dn',cat:'Files'},
+    {name:'cloud_arrow_up',label:'cloud up',cat:'Files'},{name:'save',label:'save',cat:'Files'},
+    {name:'attach',label:'attach',cat:'Files'},{name:'archive',label:'archive',cat:'Files'},
+    {name:'arrow_right',label:'right',cat:'Navigation'},{name:'arrow_left',label:'left',cat:'Navigation'},
+    {name:'arrow_up',label:'up',cat:'Navigation'},{name:'arrow_down',label:'down',cat:'Navigation'},
+    {name:'navigation',label:'menu',cat:'Navigation'},{name:'location',label:'location',cat:'Navigation'},
+    {name:'globe',label:'globe',cat:'Navigation'},{name:'compass_northwest',label:'compass',cat:'Navigation'},
+    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
+    {name:'thumb_like',label:'thumb up',cat:'Social'},{name:'thumb_dislike',label:'thumb dn',cat:'Social'},
+    {name:'share',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
+    {name:'bookmark',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
+    {name:'camera',label:'camera',cat:'Media'},{name:'image',label:'image',cat:'Media'},
+    {name:'video',label:'video',cat:'Media'},{name:'music_note_1',label:'music',cat:'Media'},
+    {name:'play_circle',label:'play',cat:'Media'},{name:'pause_circle',label:'pause',cat:'Media'},
+    {name:'mic',label:'mic',cat:'Media'},{name:'speaker_2',label:'volume',cat:'Media'},
+    {name:'desktop_mac',label:'desktop',cat:'Devices'},{name:'phone_mobile',label:'mobile',cat:'Devices'},
+    {name:'tablet',label:'tablet',cat:'Devices'},{name:'smartwatch',label:'watch',cat:'Devices'},
+    {name:'battery_10',label:'battery',cat:'Devices'},{name:'wifi_1',label:'wifi',cat:'Devices'},
+    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'usb_plug',label:'usb',cat:'Devices'},
+    {name:'data_bar_horizontal',label:'bar',cat:'Charts'},{name:'chart_pie',label:'pie',cat:'Charts'},
+    {name:'chart_multiple',label:'chart',cat:'Charts'},{name:'data_trending',label:'trend',cat:'Charts'},
+    {name:'table_simple',label:'table',cat:'Charts'},{name:'arrow_trending',label:'trend up',cat:'Charts'},
+    {name:'cart',label:'cart',cat:'Shopping'},{name:'payment',label:'payment',cat:'Shopping'},
+    {name:'box',label:'box',cat:'Shopping'},{name:'vehicle_truck_profile',label:'shipping',cat:'Shopping'},
+    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
+    {name:'calendar_add',label:'add event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
+  ]
+};
+
+// ── Tabler icon equivalents for panel preview ────────────────────────────
+// The panel uses the Tabler webfont for fast rendering in the grid.
+// The actual library SVG is only fetched when the user clicks Insert.
+
+const EQUIV = {
+  // generic cross-lib mappings (icon name → tabler class)
+  home:'ti-home', search:'ti-search', settings:'ti-settings',
+  info:'ti-info-circle', help:'ti-help-circle', build:'ti-tool',
+  code:'ti-code', dashboard:'ti-layout-dashboard',
+  visibility:'ti-eye', visibility_off:'ti-eye-off',
+  lock:'ti-lock', lock_open:'ti-lock-open', lock_closed:'ti-lock',
+  delete:'ti-trash', print:'ti-printer', download:'ti-download', upload:'ti-upload',
+  bookmark:'ti-bookmark', flag:'ti-flag', save:'ti-device-floppy',
+  warning:'ti-alert-circle', check_circle:'ti-circle-check',
+  account_circle:'ti-user-circle',
+  mail:'ti-mail', phone:'ti-phone', chat:'ti-message',
+  send:'ti-send', reply:'ti-arrow-back-up', inbox:'ti-inbox',
+  notifications:'ti-bell', group:'ti-users', comment:'ti-message-dots',
+  forum:'ti-messages', question_answer:'ti-messages',
+  announcement:'ti-speakerphone',
+  add:'ti-plus', remove:'ti-minus', close:'ti-x', edit:'ti-edit',
+  link:'ti-link', share:'ti-share', label:'ti-tag',
+  attachment:'ti-paperclip', archive:'ti-archive',
+  filter_list:'ti-filter', sort:'ti-arrows-sort',
+  content_copy:'ti-copy',
+  favorite:'ti-heart', star:'ti-star',
+  thumb_up:'ti-thumb-up', thumb_down:'ti-thumb-down',
+  person:'ti-user', people:'ti-users',
+  menu:'ti-menu-2', arrow_back:'ti-arrow-left', arrow_forward:'ti-arrow-right',
+  place:'ti-map-pin', map:'ti-map', language:'ti-language',
+  public:'ti-world', expand_more:'ti-chevron-down',
+  camera:'ti-camera', image:'ti-photo', videocam:'ti-video', music_note:'ti-music',
+  play_circle:'ti-player-play', pause:'ti-player-pause',
+  volume_up:'ti-volume', mic:'ti-microphone',
+  insert_drive_file:'ti-file', folder:'ti-folder',
+  folder_open:'ti-folder-open', cloud:'ti-cloud',
+  cloud_upload:'ti-cloud-upload', cloud_download:'ti-cloud-download',
+  computer:'ti-device-desktop', smartphone:'ti-device-mobile',
+  tablet:'ti-device-tablet', watch:'ti-watch',
+  battery_full:'ti-battery', wifi:'ti-wifi', bluetooth:'ti-bluetooth', usb:'ti-usb',
+  bar_chart:'ti-chart-bar', pie_chart:'ti-chart-pie', show_chart:'ti-chart-line',
+  timeline:'ti-timeline', table_chart:'ti-table', assessment:'ti-report-analytics',
+  shopping_cart:'ti-shopping-cart', payment:'ti-credit-card',
+  credit_card:'ti-credit-card', local_shipping:'ti-truck',
+  storefront:'ti-building-store', inventory:'ti-package',
+  calendar_today:'ti-calendar', alarm:'ti-alarm',
+  schedule:'ti-clock', event:'ti-calendar-event',
+  // tabler (mostly 1:1, add overrides)
+  'info-circle':'ti-info-circle', 'help-circle':'ti-help-circle',
+  'alert-circle':'ti-alert-circle', tool:'ti-tool',
+  'eye-off':'ti-eye-off', 'lock-open':'ti-lock-open',
+  trash:'ti-trash', refresh:'ti-refresh', copy:'ti-copy',
+  check:'ti-check', x:'ti-x', plus:'ti-plus', minus:'ti-minus',
+  'message-dots':'ti-message-dots', speakerphone:'ti-speakerphone',
+  file:'ti-file', 'device-floppy':'ti-device-floppy', paperclip:'ti-paperclip',
+  'cloud-download':'ti-cloud-download', 'cloud-upload':'ti-cloud-upload',
+  'arrow-right':'ti-arrow-right', 'arrow-left':'ti-arrow-left',
+  'arrow-up':'ti-arrow-up', 'arrow-down':'ti-arrow-down',
+  'chevron-right':'ti-chevron-right', 'menu-2':'ti-menu-2',
+  'map-pin':'ti-map-pin', world:'ti-world', compass:'ti-compass',
+  heart:'ti-heart', 'thumb-up':'ti-thumb-up', 'thumb-down':'ti-thumb-down',
+  'message':'ti-message', bell:'ti-bell', users:'ti-users', user:'ti-user',
+  photo:'ti-photo', video:'ti-video', music:'ti-music',
+  'player-play':'ti-player-play', 'player-pause':'ti-player-pause',
+  microphone:'ti-microphone', volume:'ti-volume',
+  'device-desktop':'ti-device-desktop', 'device-mobile':'ti-device-mobile',
+  'device-tablet':'ti-device-tablet', battery:'ti-battery', cpu:'ti-cpu',
+  'chart-bar':'ti-chart-bar', 'chart-pie':'ti-chart-pie',
+  'chart-line':'ti-chart-line', 'chart-area':'ti-chart-area',
+  table:'ti-table', 'report-analytics':'ti-report-analytics',
+  'shopping-cart':'ti-shopping-cart', 'credit-card':'ti-credit-card',
+  package:'ti-package', truck:'ti-truck',
+  'building-store':'ti-building-store', receipt:'ti-receipt',
+  calendar:'ti-calendar', clock:'ti-clock',
+  'calendar-event':'ti-calendar-event',
+  // phosphor
+  house:'ti-home', 'magnifying-glass':'ti-search', gear:'ti-settings',
+  question:'ti-help-circle', bug:'ti-bug', wrench:'ti-tool',
+  'eye-slash':'ti-eye-off', 'lock-open':'ti-lock-open',
+  'pencil-simple':'ti-edit', 'check':'ti-check',
+  envelope:'ti-mail', 'paper-plane-right':'ti-send', tray:'ti-inbox',
+  'chat-centered-dots':'ti-message-dots', megaphone:'ti-speakerphone',
+  'download-simple':'ti-download', 'upload-simple':'ti-upload',
+  'cloud-arrow-down':'ti-cloud-download', 'cloud-arrow-up':'ti-cloud-upload',
+  'floppy-disk':'ti-device-floppy', 'archive-box':'ti-archive',
+  list:'ti-list', globe:'ti-world',
+  'thumbs-up':'ti-thumb-up', 'thumbs-down':'ti-thumb-down',
+  'share-network':'ti-share', 'bookmark-simple':'ti-bookmark',
+  'video-camera':'ti-video', 'music-note':'ti-music',
+  'play-circle':'ti-player-play', 'pause-circle':'ti-player-pause',
+  'speaker-high':'ti-volume', desktop:'ti-device-desktop',
+  'device-mobile':'ti-device-mobile', 'device-tablet':'ti-device-tablet',
+  'battery-full':'ti-battery', 'wifi-high':'ti-wifi',
+  'chart-line-up':'ti-trending-up', 'trend-up':'ti-trending-up',
+  'calendar-plus':'ti-calendar-plus',
+  // fluent
+  question_circle:'ti-help-circle', wrench_screwdriver:'ti-tool',
+  eye_off:'ti-eye-off', dismiss:'ti-x', subtract:'ti-minus',
+  checkmark:'ti-check', mail_inbox:'ti-inbox', alert:'ti-alert-circle',
+  chat_bubbles_question:'ti-messages',
+  document:'ti-file', arrow_download:'ti-download', arrow_upload:'ti-upload',
+  cloud_arrow_up:'ti-cloud-upload', cloud_download:'ti-cloud-download',
+  attach:'ti-paperclip',
+  arrow_right:'ti-arrow-right', arrow_left:'ti-arrow-left',
+  arrow_up:'ti-arrow-up', arrow_down:'ti-arrow-down',
+  navigation:'ti-menu-2', location:'ti-map-pin',
+  compass_northwest:'ti-compass',
+  thumb_like:'ti-thumb-up', thumb_dislike:'ti-thumb-down',
+  music_note_1:'ti-music', pause_circle:'ti-player-pause',
+  speaker_2:'ti-volume', desktop_mac:'ti-device-desktop',
+  phone_mobile:'ti-device-mobile', smartwatch:'ti-watch',
+  battery_10:'ti-battery', wifi_1:'ti-wifi', usb_plug:'ti-usb',
+  data_bar_horizontal:'ti-chart-bar', chart_pie:'ti-chart-pie',
+  chart_multiple:'ti-chart-line', data_trending:'ti-trending-up',
+  table_simple:'ti-table', arrow_trending:'ti-trending-up',
+  cart:'ti-shopping-cart', box:'ti-package',
+  vehicle_truck_profile:'ti-truck', calendar_add:'ti-calendar-plus',
+};
+
+function tablerFor(name) {
+  return EQUIV[name] || 'ti-square';
+}
+
+// ── Session state ────────────────────────────────────────────────────────
+
+const S = {
+  lib:      'material',
+  style:    'filled',
+  category: 'all',
+  query:    '',
+  selected: new Set(),   // Set of icon name strings
+  color:    '#1A1A1A',
+  size:     24,
+  svgCache: {}
+};
+
+// ── Filtered icon list ───────────────────────────────────────────────────
+
+function filtered() {
+  const all  = ICON_DATA[S.lib];
+  const q    = S.query.toLowerCase();
+  return all.filter(ic => {
+    const catOk = S.category === 'all' || ic.cat === S.category;
+    const qOk   = !q || ic.name.includes(q) || ic.label.includes(q) || ic.cat.toLowerCase().includes(q);
+    return catOk && qOk;
+  });
+}
+
+// ── Library switching ────────────────────────────────────────────────────
+
+function switchLib(id) {
+  S.lib      = id;
+  S.style    = LIBS[id].defaultStyle;
+  S.category = 'all';
+  S.selected.clear();
+
+  document.querySelectorAll('.lib-tab').forEach(t =>
+    t.classList.toggle('on', t.dataset.lib === id));
+
+  buildStyleDropdown();
+  buildCatDropdown();
+  renderGrid();
+  renderSelBar();
+}
+
+// ── Dropdown helpers ─────────────────────────────────────────────────────
+
+function toggleDd(bodyId, chevId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevId);
+  const opening = !body.classList.contains('open');
+  closeDds();
+  if (opening) { body.classList.add('open'); chev.classList.add('open'); }
+}
+
+function closeDds() {
+  document.querySelectorAll('.dd-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.dd-chev').forEach(c => c.classList.remove('open'));
+}
+
+// ── Style dropdown ───────────────────────────────────────────────────────
+
+function buildStyleDropdown() {
+  const styles = LIBS[S.lib].styles;
+  document.getElementById('style-val').textContent = cap(S.style);
+  document.getElementById('style-body').innerHTML =
+    '<div style="padding:4px 0">' +
+    styles.map(s => `
+      <div class="opt-row ${s === S.style ? 'active' : ''}" data-style="${s}" onclick="pickStyle('${s}')">
+        <span style="text-transform:capitalize">${s}</span>
+        <div class="opt-chk"><i class="ti ti-check"></i></div>
+      </div>`).join('') +
+    '</div>';
+}
+
+function pickStyle(s) {
+  S.style = s;
+  document.getElementById('style-val').textContent = cap(s);
+  document.querySelectorAll('#style-body .opt-row').forEach(r =>
+    r.classList.toggle('active', r.dataset.style === s));
+  closeDds();
+  renderGrid();
+}
+
+// ── Category dropdown ────────────────────────────────────────────────────
+
+function buildCatDropdown() {
+  const cats = ['all', ...[...new Set(ICON_DATA[S.lib].map(i => i.cat))].sort()];
+  document.getElementById('cat-val').textContent = S.category === 'all' ? 'All' : S.category;
+  document.getElementById('cat-body').innerHTML =
+    '<div style="padding:4px 0">' +
+    cats.map(c => `
+      <div class="opt-row ${c === S.category ? 'active' : ''}" data-cat="${c}" onclick="pickCat('${c}')">
+        <span>${c === 'all' ? 'All categories' : c}</span>
+        <i class="ti ti-check opt-tick"></i>
+      </div>`).join('') +
+    '</div>';
+}
+
+function pickCat(c) {
+  S.category = c;
+  document.getElementById('cat-val').textContent = c === 'all' ? 'All' : c;
+  document.querySelectorAll('#cat-body .opt-row').forEach(r =>
+    r.classList.toggle('active', r.dataset.cat === c));
+  closeDds();
+  renderGrid();
+}
+
+// ── Icon grid ────────────────────────────────────────────────────────────
+
+function renderGrid() {
+  const grid  = document.getElementById('icon-grid');
+  const icons = filtered();
+  const total = ICON_DATA[S.lib].length;
+
+  document.getElementById('result-count').textContent =
+    `${icons.length} of ${total} icons`;
+
+  if (!icons.length) {
+    grid.innerHTML = '<div class="grid-msg">No icons match your search</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  icons.forEach(ic => {
+    const cell = document.createElement('div');
+    cell.className = 'ip-cell' + (S.selected.has(ic.name) ? ' sel' : '');
+    cell.setAttribute('role', 'listitem');
+    cell.setAttribute('aria-label', ic.label + ' icon');
+    cell.dataset.name = ic.name;
+    cell.innerHTML =
+      `<div class="chk-badge"><i class="ti ti-check" aria-hidden="true"></i></div>` +
+      `<i class="ti ${tablerFor(ic.name)} icn" aria-hidden="true"></i>` +
+      `<span class="lbl">${ic.label}</span>`;
+    cell.addEventListener('click', () => {
+      closeDds();
+      toggleSelect(ic.name, cell);
+    });
+    grid.appendChild(cell);
+  });
+}
+
+// ── Selection ────────────────────────────────────────────────────────────
+
+function toggleSelect(name, cell) {
+  if (S.selected.has(name)) {
+    S.selected.delete(name);
+    cell.classList.remove('sel');
+  } else {
+    S.selected.add(name);
+    cell.classList.add('sel');
+  }
+  renderSelBar();
+}
+
+function clearAll() {
+  S.selected.clear();
+  document.querySelectorAll('.ip-cell.sel').forEach(c => c.classList.remove('sel'));
+  renderSelBar();
+}
+
+function removeOne(name) {
+  S.selected.delete(name);
+  const cell = document.querySelector(`.ip-cell[data-name="${name}"]`);
+  if (cell) cell.classList.remove('sel');
+  renderSelBar();
+}
+
+function renderSelBar() {
+  const n   = S.selected.size;
+  const bar = document.getElementById('sel-bar');
+  const btn = document.getElementById('ins-btn');
+
+  bar.classList.toggle('empty', n === 0);
+  btn.disabled = n === 0;
+  document.getElementById('sel-label').textContent =
+    n === 1 ? '1 selected' : `${n} selected`;
+  btn.textContent = n === 0
+    ? 'Insert icons into slide'
+    : `Insert ${n} icon${n > 1 ? 's' : ''} into slide`;
+
+  const strip = document.getElementById('preview-strip');
+  strip.innerHTML = '';
+
+  if (!n) {
+    const ph = document.createElement('span');
+    ph.style.cssText = 'font-size:11px;color:#bbb';
+    ph.textContent = 'Tap icons above to select';
+    strip.appendChild(ph);
+    return;
+  }
+
+  S.selected.forEach(name => {
+    const chip = document.createElement('div');
+    chip.className = 'prev-chip';
+    // Use escaped name in onclick to avoid injection
+    const safe = name.replace(/'/g, "\\'");
+    chip.innerHTML =
+      `<i class="ti ${tablerFor(name)}" aria-hidden="true"></i>` +
+      `<div class="rm" role="button" aria-label="Remove ${name}" onclick="removeOne('${safe}')">` +
+      `<i class="ti ti-x" aria-hidden="true"></i></div>`;
+    strip.appendChild(chip);
+  });
+}
+
+// ── Color management ─────────────────────────────────────────────────────
+
+// Single source of truth for all color changes.
+// activeDot: the .cdot element to highlight, or null for custom values.
+function setColor(hex, activeDot) {
+  hex = hex.replace(/^#/, '').toUpperCase();
+  if (!/^[0-9A-F]{6}$/.test(hex)) return;
+  S.color = '#' + hex;
+  document.getElementById('hex-swatch').style.background = S.color;
+  document.getElementById('hex-inp').value = hex;
+  document.getElementById('clr-picker').value = S.color;
+  document.querySelectorAll('.cdot').forEach(d => d.classList.remove('on'));
+  if (activeDot) activeDot.classList.add('on');
+}
+
+function swatchClick(dot, hex) { setColor(hex, dot); }
+function onHexInput(val)       { setColor(val, null); }
+function onPickerInput(val)    { setColor(val, null); }
+
+// ── Size ─────────────────────────────────────────────────────────────────
+
+function setSize(px, btn) {
+  S.size = px;
+  document.querySelectorAll('.szb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ── Search ───────────────────────────────────────────────────────────────
+
+function onSearch(val) { S.query = val.trim(); renderGrid(); }
+function clearSearch() {
+  document.getElementById('search-inp').value = '';
+  S.query = '';
+  renderGrid();
+}
+
+// ── SVG fetch and colorize ───────────────────────────────────────────────
+
+async function fetchSVG(url) {
+  if (S.svgCache[url]) return S.svgCache[url];
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
+  const text = await r.text();
+  S.svgCache[url] = text;
+  return text;
+}
+
+function colorizeSVG(svgText, color, colorMode) {
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(svgText, 'image/svg+xml');
+  const svg    = doc.documentElement;
+
+  if (colorMode === 'stroke') {
+    // Tabler: stroke-based paths
+    svg.setAttribute('stroke', color);
+    svg.querySelectorAll('[stroke]').forEach(el => {
+      if (el.getAttribute('stroke') !== 'none') el.setAttribute('stroke', color);
+    });
+  } else {
+    // Fill-based (Material, Phosphor, Fluent)
+    svg.setAttribute('fill', color);
+    svg.querySelectorAll('[fill]').forEach(el => {
+      if (el.getAttribute('fill') !== 'none') el.setAttribute('fill', color);
+    });
+  }
+
+  // Strip fixed dimensions; PowerPoint controls placement via ShapeAddOptions
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+
+  return new XMLSerializer().serializeToString(svg);
+}
+
+// ── Office.js insertion ──────────────────────────────────────────────────
+
+async function insertSelected() {
+  if (!S.selected.size) return;
+
+  const btn    = document.getElementById('ins-btn');
+  const status = document.getElementById('status');
+  btn.disabled    = true;
+  btn.textContent = 'Fetching SVGs…';
+  status.textContent = '';
+  status.className   = '';
+
+  const lib    = LIBS[S.lib];
+  const icons  = ICON_DATA[S.lib].filter(ic => S.selected.has(ic.name));
+  const sizePt = Math.round(S.size * 0.75);   // screen px → points (approximate at 96 dpi)
+  const gap    = Math.round(sizePt * 0.3);
+  const errors = [];
+
+  try {
+    // Pre-fetch all SVGs before opening PowerPoint.run context
+    const svgMap = {};
+    for (const ic of icons) {
+      try {
+        const url = lib.svgUrl(ic, S.style, S.size);
+        const raw = await fetchSVG(url);
+        svgMap[ic.name] = colorizeSVG(raw, S.color, lib.colorMode);
+      } catch (e) {
+        errors.push(ic.label);
+      }
+    }
+
+    btn.textContent = 'Inserting…';
+
+    await PowerPoint.run(async (context) => {
+      const slides = context.presentation.slides;
+      slides.load('items');
+      await context.sync();
+
+      if (!slides.items.length) throw new Error('No slides found.');
+
+      // Insert on the first slide.
+      // To target the active slide, upgrade to PowerPoint JS API 1.5 and use
+      // context.presentation.getSelectedSlides().getItemAt(0)
+      const slide = slides.items[0];
+
+      let left = 50;
+      const top = 50;
+
+      for (const ic of icons) {
+        if (!svgMap[ic.name]) continue;
+        slide.shapes.addSvg(svgMap[ic.name], { left, top, width: sizePt, height: sizePt });
+        left += sizePt + gap;
+      }
+
+      await context.sync();
+    });
+
+    const inserted = icons.length - errors.length;
+    status.textContent = inserted
+      ? `${inserted} icon${inserted > 1 ? 's' : ''} inserted.` +
+        (errors.length ? ` ${errors.length} failed: ${errors.join(', ')}.` : '')
+      : `All inserts failed: ${errors.join(', ')}.`;
+    status.className = errors.length ? 'err' : 'ok';
+
+  } catch (e) {
+    status.textContent = `Error: ${e.message}`;
+    status.className   = 'err';
+  }
+
+  renderSelBar();
+}
+
+// ── Utility ──────────────────────────────────────────────────────────────
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── Init ─────────────────────────────────────────────────────────────────
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd-trigger') && !e.target.closest('.dd-body')) closeDds();
+});
+
+function init() {
+  switchLib('material');
+}
+
+if (typeof Office !== 'undefined') {
+  Office.onReady(info => {
+    // Works in both PowerPoint and browser (for local testing without Office)
+    init();
+  });
+} else {
+  // No Office.js available — browser preview mode
+  init();
+}
+</script>
+
+</body>
+</html>

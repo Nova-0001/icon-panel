@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+
+  <!-- Replace this GUID with a freshly generated one for production -->
+  <Id>{3F8A1D2E-4B6C-4A9D-8E1F-2C3D5F7A9B0E}</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Icon Panel</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Icon Panel"/>
+  <Description DefaultValue="Browse and insert icons from Material, Tabler, Phosphor, and Fluent UI directly into PowerPoint slides."/>
+
+  <IconUrl DefaultValue="https://nova-0001.github.io/icon-panel/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://nova-0001.github.io/icon-panel/icon-64.png"/>
+  <SupportUrl DefaultValue="https://nova-0001.github.io/icon-panel"/>
+
+  <!-- Domains the task pane is permitted to communicate with -->
+  <AppDomains>
+    <AppDomain>https://nova-0001.github.io</AppDomain>
+    <AppDomain>https://unpkg.com</AppDomain>
+    <AppDomain>https://cdn.jsdelivr.net</AppDomain>
+    <AppDomain>https://appsforoffice.microsoft.com</AppDomain>
+    <AppDomain>https://fonts.googleapis.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.3">
+      <!-- shapes.addSvg() requires PowerPoint JS API 1.3 -->
+      <Set Name="PowerPointApi" MinVersion="1.3"/>
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://nova-0001.github.io/icon-panel/taskpane.html"/>
+  </DefaultSettings>
+
+  <!-- ReadWriteDocument is required to insert shapes into slides -->
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+
+          <FunctionFile resid="Commands.Url"/>
+
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="CommandsGroup">
+                <Label resid="CommandsGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="TaskpaneButton">
+                  <Label resid="TaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="TaskpaneButton.Label"/>
+                    <Description resid="TaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId1</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://nova-0001.github.io/icon-panel/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://nova-0001.github.io/icon-panel/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://nova-0001.github.io/icon-panel/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://nova-0001.github.io/icon-panel"/>
+        <bt:Url id="Commands.Url"            DefaultValue="https://nova-0001.github.io/icon-panel/commands.html"/>
+        <bt:Url id="Taskpane.Url"            DefaultValue="https://nova-0001.github.io/icon-panel/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title"       DefaultValue="Icon Panel is ready"/>
+        <bt:String id="CommandsGroup.Label"    DefaultValue="Icon Panel"/>
+        <bt:String id="TaskpaneButton.Label"   DefaultValue="Icon Panel"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Browse and insert icons from four open-source libraries."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Open the Icon Panel to search and insert SVG icons into your slide."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+
+</OfficeApp>
