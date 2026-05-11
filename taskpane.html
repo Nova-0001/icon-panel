@@ -10,6 +10,8 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root { --preview-sz: 24px; }
+
     html, body { height: 100%; overflow: hidden; }
 
     body {
@@ -35,8 +37,8 @@
     input, button, select { font-family: inherit; font-size: inherit; }
     button { cursor: pointer; }
 
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 2px; }
+    ::-webkit-scrollbar { width: 16px; }
+    ::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 8px; border: 4px solid transparent; background-clip: padding-box; }
 
     /* ── Library tabs ─────────────────────────────────────── */
     .lib-tabs {
@@ -130,6 +132,8 @@
     .view-btns { display: flex; gap: 6px; }
     .view-btns i { font-size: 14px; color: #aaa; cursor: pointer; }
     .view-btns i.on { color: #333; }
+    .pzb { padding: 2px 5px; font-size: 10px; font-weight: 600; border-radius: 3px; border: 1px solid #ddd; background: transparent; color: #888; cursor: pointer; }
+    .pzb.on { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
 
     /* ── Icon grid ────────────────────────────────────────── */
     #icon-grid {
@@ -162,7 +166,7 @@
     }
     .ip-cell:hover { background: #f0f0f0; }
     .ip-cell.sel { border-color: #0078d4; background: #dbeeff; }
-    .ip-cell .icn { font-size: 20px; color: #333; line-height: 1; }
+    .ip-cell .icn { font-size: var(--preview-sz); color: #333; line-height: 1; }
     /* Material Icons font renders via text content of a span */
     .mat-icn { font-size: 20px !important; line-height: 1 !important; display: block !important; width: auto !important; }
     /* Phosphor icons */
@@ -311,15 +315,7 @@
   <!-- Fixed top panel -->
   <div id="top-panel">
 
-    <div id="app-header">Icon Panel</div>
-
-    <!-- Library tabs -->
-    <div class="lib-tabs">
-      <div class="lib-tab on"  data-lib="material"  onclick="switchLib('material')">Material<br>Icons</div>
-      <div class="lib-tab"     data-lib="tabler"     onclick="switchLib('tabler')">Tabler<br>Icons</div>
-      <div class="lib-tab"     data-lib="phosphor"   onclick="switchLib('phosphor')">Phosphor<br>Icons</div>
-      <div class="lib-tab"     data-lib="fluent"     onclick="switchLib('fluent')">Fluent UI<br>Icons</div>
-    </div>
+    <div id="app-header">Icon Panel &mdash; Google Material Icons</div>
 
     <!-- Search -->
     <div class="section" style="padding:10px 12px">
@@ -358,12 +354,20 @@
       <div id="cat-body" class="dd-body section"></div>
     </div>
 
-    <!-- Results count + view toggle -->
+    <!-- Results count + preview size + view toggle -->
     <div class="results-row section" style="padding-bottom:3px">
       <span id="result-count">Loading…</span>
-      <div class="view-btns">
-        <i class="ti ti-layout-grid on" data-view="grid" onclick="setView('grid')" title="Grid view" aria-label="Grid view"></i>
-        <i class="ti ti-list"           data-view="list" onclick="setView('list')" title="List view" aria-label="List view"></i>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;gap:2px">
+          <button class="pzb" data-size="18" onclick="setPreviewSize(18)" title="Small preview">S</button>
+          <button class="pzb on" data-size="24" onclick="setPreviewSize(24)" title="Medium preview">M</button>
+          <button class="pzb" data-size="32" onclick="setPreviewSize(32)" title="Large preview">L</button>
+          <button class="pzb" data-size="44" onclick="setPreviewSize(44)" title="X-Large preview">XL</button>
+        </div>
+        <div class="view-btns">
+          <i class="ti ti-layout-grid on" data-view="grid" onclick="setView('grid')" title="Grid view" aria-label="Grid view"></i>
+          <i class="ti ti-list"           data-view="list" onclick="setView('list')" title="List view" aria-label="List view"></i>
+        </div>
       </div>
     </div>
 
@@ -392,9 +396,9 @@
       <div style="display:flex;gap:3px">
         <button class="szb"    onclick="setSize(16,this)">16</button>
         <button class="szb"    onclick="setSize(20,this)">20</button>
-        <button class="szb on" onclick="setSize(24,this)">24</button>
+        <button class="szb"    onclick="setSize(24,this)">24</button>
         <button class="szb"    onclick="setSize(32,this)">32</button>
-        <button class="szb"    onclick="setSize(48,this)">48</button>
+        <button class="szb on" onclick="setSize(48,this)">48</button>
       </div>
     </div>
 
@@ -445,7 +449,7 @@ const LIBS = {
     name: 'Material Icons',
     cdnBase: 'https://unpkg.com/@material-design-icons/svg@0.14.13',
     styles: ['filled','outlined','rounded','sharp'],
-    defaultStyle: 'filled',
+    defaultStyle: 'outlined',
     colorMode: 'fill',
     pkg: '@material-design-icons/svg@0.14.13',
     svgUrl(icon, style) {
@@ -457,67 +461,6 @@ const LIBS = {
         .filter(f => f.path && f.path.endsWith('.svg'))
         .map(f => {
           const name = f.path.split('/').pop().replace('.svg', '');
-          return { name, label: name.replace(/_/g, ' '), cat: guessCategory(name) };
-        });
-    }
-  },
-  tabler: {
-    name: 'Tabler Icons',
-    cdnBase: 'https://unpkg.com/@tabler/icons@3.30.0',
-    styles: ['outline','filled'],
-    defaultStyle: 'outline',
-    colorMode: 'stroke',
-    pkg: '@tabler/icons@3.30.0',
-    svgUrl(icon, style) {
-      return style === 'filled'
-        ? `${this.cdnBase}/icons/filled/${icon.name}.svg`
-        : `${this.cdnBase}/icons/${icon.name}.svg`;
-    },
-    metaUrl: 'https://unpkg.com/@tabler/icons@3.30.0/tags.json',
-    useRawData: true,
-    parseFiles(data) {
-      return Object.keys(data || {}).map(name => ({
-        name, label: name.replace(/-/g, ' '), cat: guessCategory(name)
-      }));
-    }
-  },
-  phosphor: {
-    name: 'Phosphor Icons',
-    cdnBase: 'https://unpkg.com/@phosphor-icons/core@2.1.1/assets',
-    styles: ['thin','light','regular','bold','fill','duotone'],
-    defaultStyle: 'regular',
-    colorMode: 'fill',
-    pkg: '@phosphor-icons/core@2.1.1',
-    svgUrl(icon, style) {
-      return `${this.cdnBase}/${style}/${icon.name}.svg`;
-    },
-    metaUrl: 'https://unpkg.com/@phosphor-icons/core@2.1.1/assets/regular/?meta',
-    parseFiles(files) {
-      return (files || [])
-        .filter(f => f.path && f.path.endsWith('.svg'))
-        .map(f => {
-          const name = f.path.split('/').pop().replace('.svg', '');
-          return { name, label: name.replace(/-/g, ' '), cat: guessCategory(name) };
-        });
-    }
-  },
-  fluent: {
-    name: 'Fluent UI Icons',
-    cdnBase: 'https://unpkg.com/@fluentui/svg-icons@1.1.276/icons',
-    styles: ['regular','filled'],
-    defaultStyle: 'regular',
-    colorMode: 'fill',
-    pkg: '@fluentui/svg-icons@1.1.276',
-    svgUrl(icon, style, size) {
-      return `${this.cdnBase}/${icon.name}_${size}_${style}.svg`;
-    },
-    metaUrl: 'https://unpkg.com/@fluentui/svg-icons@1.1.276/icons/?meta',
-    parseFiles(files) {
-      return (files || [])
-        .filter(f => f.path && f.path.endsWith('_24_regular.svg'))
-        .map(f => {
-          const filename = f.path.split('/').pop();
-          const name = filename.slice(0, -15);
           return { name, label: name.replace(/_/g, ' '), cat: guessCategory(name) };
         });
     }
@@ -583,146 +526,6 @@ const ICON_DATA = {
     {name:'calendar_today',label:'calendar',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
     {name:'schedule',label:'schedule',cat:'Calendar'},{name:'event',label:'event',cat:'Calendar'},
   ],
-
-  tabler: [
-    {name:'home',label:'home',cat:'General'},{name:'search',label:'search',cat:'General'},
-    {name:'settings',label:'settings',cat:'General'},{name:'info-circle',label:'info',cat:'General'},
-    {name:'help-circle',label:'help',cat:'General'},{name:'alert-circle',label:'alert',cat:'General'},
-    {name:'tool',label:'tool',cat:'General'},{name:'code',label:'code',cat:'General'},
-    {name:'eye',label:'eye',cat:'General'},{name:'eye-off',label:'eye off',cat:'General'},
-    {name:'lock',label:'lock',cat:'General'},{name:'lock-open',label:'unlock',cat:'General'},
-    {name:'trash',label:'trash',cat:'General'},{name:'edit',label:'edit',cat:'General'},
-    {name:'refresh',label:'refresh',cat:'General'},{name:'copy',label:'copy',cat:'General'},
-    {name:'check',label:'check',cat:'General'},{name:'x',label:'close',cat:'General'},
-    {name:'plus',label:'plus',cat:'General'},{name:'minus',label:'minus',cat:'General'},
-    {name:'mail',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
-    {name:'message',label:'message',cat:'Communication'},{name:'send',label:'send',cat:'Communication'},
-    {name:'inbox',label:'inbox',cat:'Communication'},{name:'bell',label:'bell',cat:'Communication'},
-    {name:'users',label:'users',cat:'Communication'},{name:'user',label:'user',cat:'Communication'},
-    {name:'message-dots',label:'msg dots',cat:'Communication'},{name:'speakerphone',label:'announce',cat:'Communication'},
-    {name:'file',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
-    {name:'download',label:'download',cat:'Files'},{name:'upload',label:'upload',cat:'Files'},
-    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud-download',label:'cloud dn',cat:'Files'},
-    {name:'cloud-upload',label:'cloud up',cat:'Files'},{name:'device-floppy',label:'floppy',cat:'Files'},
-    {name:'paperclip',label:'attach',cat:'Files'},{name:'archive',label:'archive',cat:'Files'},
-    {name:'arrow-right',label:'right',cat:'Navigation'},{name:'arrow-left',label:'left',cat:'Navigation'},
-    {name:'arrow-up',label:'up',cat:'Navigation'},{name:'arrow-down',label:'down',cat:'Navigation'},
-    {name:'chevron-right',label:'chevron rt',cat:'Navigation'},{name:'menu-2',label:'menu',cat:'Navigation'},
-    {name:'map',label:'map',cat:'Navigation'},{name:'map-pin',label:'pin',cat:'Navigation'},
-    {name:'world',label:'world',cat:'Navigation'},{name:'compass',label:'compass',cat:'Navigation'},
-    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
-    {name:'thumb-up',label:'thumb up',cat:'Social'},{name:'thumb-down',label:'thumb dn',cat:'Social'},
-    {name:'share',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
-    {name:'bookmark',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
-    {name:'camera',label:'camera',cat:'Media'},{name:'photo',label:'photo',cat:'Media'},
-    {name:'video',label:'video',cat:'Media'},{name:'music',label:'music',cat:'Media'},
-    {name:'player-play',label:'play',cat:'Media'},{name:'player-pause',label:'pause',cat:'Media'},
-    {name:'microphone',label:'mic',cat:'Media'},{name:'volume',label:'volume',cat:'Media'},
-    {name:'device-desktop',label:'desktop',cat:'Devices'},{name:'device-mobile',label:'mobile',cat:'Devices'},
-    {name:'device-tablet',label:'tablet',cat:'Devices'},{name:'watch',label:'watch',cat:'Devices'},
-    {name:'battery',label:'battery',cat:'Devices'},{name:'wifi',label:'wifi',cat:'Devices'},
-    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'cpu',label:'cpu',cat:'Devices'},
-    {name:'chart-bar',label:'bar',cat:'Charts'},{name:'chart-pie',label:'pie',cat:'Charts'},
-    {name:'chart-line',label:'line',cat:'Charts'},{name:'chart-area',label:'area',cat:'Charts'},
-    {name:'table',label:'table',cat:'Charts'},{name:'report-analytics',label:'analytics',cat:'Charts'},
-    {name:'shopping-cart',label:'cart',cat:'Shopping'},{name:'credit-card',label:'credit',cat:'Shopping'},
-    {name:'package',label:'package',cat:'Shopping'},{name:'truck',label:'truck',cat:'Shopping'},
-    {name:'building-store',label:'store',cat:'Shopping'},{name:'receipt',label:'receipt',cat:'Shopping'},
-    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
-    {name:'calendar-event',label:'event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
-  ],
-
-  phosphor: [
-    {name:'house',label:'house',cat:'General'},{name:'magnifying-glass',label:'search',cat:'General'},
-    {name:'gear',label:'gear',cat:'General'},{name:'info',label:'info',cat:'General'},
-    {name:'question',label:'question',cat:'General'},{name:'warning',label:'warning',cat:'General'},
-    {name:'bug',label:'bug',cat:'General'},{name:'wrench',label:'wrench',cat:'General'},
-    {name:'code',label:'code',cat:'General'},{name:'eye',label:'eye',cat:'General'},
-    {name:'eye-slash',label:'eye off',cat:'General'},{name:'lock',label:'lock',cat:'General'},
-    {name:'lock-open',label:'unlock',cat:'General'},{name:'trash',label:'trash',cat:'General'},
-    {name:'pencil-simple',label:'edit',cat:'General'},{name:'copy',label:'copy',cat:'General'},
-    {name:'check',label:'check',cat:'General'},{name:'x',label:'close',cat:'General'},
-    {name:'plus',label:'plus',cat:'General'},{name:'minus',label:'minus',cat:'General'},
-    {name:'envelope',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
-    {name:'chat',label:'chat',cat:'Communication'},{name:'paper-plane-right',label:'send',cat:'Communication'},
-    {name:'tray',label:'inbox',cat:'Communication'},{name:'bell',label:'bell',cat:'Communication'},
-    {name:'users',label:'users',cat:'Communication'},{name:'user',label:'user',cat:'Communication'},
-    {name:'chat-centered-dots',label:'chat dots',cat:'Communication'},{name:'megaphone',label:'announce',cat:'Communication'},
-    {name:'file',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
-    {name:'download-simple',label:'download',cat:'Files'},{name:'upload-simple',label:'upload',cat:'Files'},
-    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud-arrow-down',label:'cloud dn',cat:'Files'},
-    {name:'cloud-arrow-up',label:'cloud up',cat:'Files'},{name:'floppy-disk',label:'floppy',cat:'Files'},
-    {name:'paperclip',label:'attach',cat:'Files'},{name:'archive-box',label:'archive',cat:'Files'},
-    {name:'arrow-right',label:'right',cat:'Navigation'},{name:'arrow-left',label:'left',cat:'Navigation'},
-    {name:'arrow-up',label:'up',cat:'Navigation'},{name:'arrow-down',label:'down',cat:'Navigation'},
-    {name:'list',label:'menu',cat:'Navigation'},{name:'map-pin',label:'pin',cat:'Navigation'},
-    {name:'globe',label:'globe',cat:'Navigation'},{name:'compass',label:'compass',cat:'Navigation'},
-    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
-    {name:'thumbs-up',label:'thumb up',cat:'Social'},{name:'thumbs-down',label:'thumb dn',cat:'Social'},
-    {name:'share-network',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
-    {name:'bookmark-simple',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
-    {name:'camera',label:'camera',cat:'Media'},{name:'image',label:'image',cat:'Media'},
-    {name:'video-camera',label:'video',cat:'Media'},{name:'music-note',label:'music',cat:'Media'},
-    {name:'play-circle',label:'play',cat:'Media'},{name:'pause-circle',label:'pause',cat:'Media'},
-    {name:'microphone',label:'mic',cat:'Media'},{name:'speaker-high',label:'volume',cat:'Media'},
-    {name:'desktop',label:'desktop',cat:'Devices'},{name:'device-mobile',label:'mobile',cat:'Devices'},
-    {name:'device-tablet',label:'tablet',cat:'Devices'},{name:'watch',label:'watch',cat:'Devices'},
-    {name:'battery-full',label:'battery',cat:'Devices'},{name:'wifi-high',label:'wifi',cat:'Devices'},
-    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'cpu',label:'cpu',cat:'Devices'},
-    {name:'chart-bar',label:'bar',cat:'Charts'},{name:'chart-pie',label:'pie',cat:'Charts'},
-    {name:'chart-line',label:'line',cat:'Charts'},{name:'chart-line-up',label:'trend',cat:'Charts'},
-    {name:'table',label:'table',cat:'Charts'},{name:'trend-up',label:'trend up',cat:'Charts'},
-    {name:'shopping-cart',label:'cart',cat:'Shopping'},{name:'credit-card',label:'credit',cat:'Shopping'},
-    {name:'package',label:'package',cat:'Shopping'},{name:'truck',label:'truck',cat:'Shopping'},
-    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
-    {name:'calendar-plus',label:'new event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
-  ],
-
-  fluent: [
-    {name:'home',label:'home',cat:'General'},{name:'search',label:'search',cat:'General'},
-    {name:'settings',label:'settings',cat:'General'},{name:'info',label:'info',cat:'General'},
-    {name:'question_circle',label:'help',cat:'General'},{name:'warning',label:'warning',cat:'General'},
-    {name:'bug',label:'bug',cat:'General'},{name:'wrench_screwdriver',label:'tools',cat:'General'},
-    {name:'code',label:'code',cat:'General'},{name:'eye',label:'eye',cat:'General'},
-    {name:'eye_off',label:'eye off',cat:'General'},{name:'lock_closed',label:'lock',cat:'General'},
-    {name:'lock_open',label:'unlock',cat:'General'},{name:'delete',label:'delete',cat:'General'},
-    {name:'edit',label:'edit',cat:'General'},{name:'copy',label:'copy',cat:'General'},
-    {name:'checkmark',label:'check',cat:'General'},{name:'dismiss',label:'close',cat:'General'},
-    {name:'add',label:'add',cat:'General'},{name:'subtract',label:'subtract',cat:'General'},
-    {name:'mail',label:'mail',cat:'Communication'},{name:'phone',label:'phone',cat:'Communication'},
-    {name:'chat',label:'chat',cat:'Communication'},{name:'send',label:'send',cat:'Communication'},
-    {name:'mail_inbox',label:'inbox',cat:'Communication'},{name:'alert',label:'alert',cat:'Communication'},
-    {name:'people',label:'people',cat:'Communication'},{name:'person',label:'person',cat:'Communication'},
-    {name:'chat_bubbles_question',label:'q / a',cat:'Communication'},{name:'megaphone',label:'announce',cat:'Communication'},
-    {name:'document',label:'file',cat:'Files'},{name:'folder',label:'folder',cat:'Files'},
-    {name:'arrow_download',label:'download',cat:'Files'},{name:'arrow_upload',label:'upload',cat:'Files'},
-    {name:'cloud',label:'cloud',cat:'Files'},{name:'cloud_download',label:'cloud dn',cat:'Files'},
-    {name:'cloud_arrow_up',label:'cloud up',cat:'Files'},{name:'save',label:'save',cat:'Files'},
-    {name:'attach',label:'attach',cat:'Files'},{name:'archive',label:'archive',cat:'Files'},
-    {name:'arrow_right',label:'right',cat:'Navigation'},{name:'arrow_left',label:'left',cat:'Navigation'},
-    {name:'arrow_up',label:'up',cat:'Navigation'},{name:'arrow_down',label:'down',cat:'Navigation'},
-    {name:'navigation',label:'menu',cat:'Navigation'},{name:'location',label:'location',cat:'Navigation'},
-    {name:'globe',label:'globe',cat:'Navigation'},{name:'compass_northwest',label:'compass',cat:'Navigation'},
-    {name:'heart',label:'heart',cat:'Social'},{name:'star',label:'star',cat:'Social'},
-    {name:'thumb_like',label:'thumb up',cat:'Social'},{name:'thumb_dislike',label:'thumb dn',cat:'Social'},
-    {name:'share',label:'share',cat:'Social'},{name:'link',label:'link',cat:'Social'},
-    {name:'bookmark',label:'bookmark',cat:'Social'},{name:'flag',label:'flag',cat:'Social'},
-    {name:'camera',label:'camera',cat:'Media'},{name:'image',label:'image',cat:'Media'},
-    {name:'video',label:'video',cat:'Media'},{name:'music_note_1',label:'music',cat:'Media'},
-    {name:'play_circle',label:'play',cat:'Media'},{name:'pause_circle',label:'pause',cat:'Media'},
-    {name:'mic',label:'mic',cat:'Media'},{name:'speaker_2',label:'volume',cat:'Media'},
-    {name:'desktop_mac',label:'desktop',cat:'Devices'},{name:'phone_mobile',label:'mobile',cat:'Devices'},
-    {name:'tablet',label:'tablet',cat:'Devices'},{name:'smartwatch',label:'watch',cat:'Devices'},
-    {name:'battery_10',label:'battery',cat:'Devices'},{name:'wifi_1',label:'wifi',cat:'Devices'},
-    {name:'bluetooth',label:'bluetooth',cat:'Devices'},{name:'usb_plug',label:'usb',cat:'Devices'},
-    {name:'data_bar_horizontal',label:'bar',cat:'Charts'},{name:'chart_pie',label:'pie',cat:'Charts'},
-    {name:'chart_multiple',label:'chart',cat:'Charts'},{name:'data_trending',label:'trend',cat:'Charts'},
-    {name:'table_simple',label:'table',cat:'Charts'},{name:'arrow_trending',label:'trend up',cat:'Charts'},
-    {name:'cart',label:'cart',cat:'Shopping'},{name:'payment',label:'payment',cat:'Shopping'},
-    {name:'box',label:'box',cat:'Shopping'},{name:'vehicle_truck_profile',label:'shipping',cat:'Shopping'},
-    {name:'calendar',label:'calendar',cat:'Calendar'},{name:'clock',label:'clock',cat:'Calendar'},
-    {name:'calendar_add',label:'add event',cat:'Calendar'},{name:'alarm',label:'alarm',cat:'Calendar'},
-  ]
 };
 
 // ── Tabler icon equivalents for panel preview ────────────────────────────
@@ -845,7 +648,6 @@ const EQUIV = {
 };
 
 function tablerFor(name) {
-  if (S.lib === 'tabler') return 'ti-' + name;
   return EQUIV[name] || 'ti-square';
 }
 
@@ -855,23 +657,21 @@ function tablerFor(name) {
 // Web font ligature rendering is unreliable in the Office WebView,
 // so SVG img is the only approach that works consistently.
 function previewHTML(ic) {
-  if (S.lib === 'tabler') {
-    return `<i class="ti ti-${ic.name} icn" aria-hidden="true"></i>`;
-  }
   const src = LIBS[S.lib].svgUrl(ic, S.style, 24);
-  return `<img class="icn icn-img" loading="lazy" src="${src}" width="20" height="20" alt="">`;
+  return `<img class="icn icn-img" loading="lazy" src="${src}" alt="">`;
 }
 
 // ── Session state ────────────────────────────────────────────────────────
 
 const S = {
   lib:      'material',
-  style:    'filled',
+  style:    'outlined',
   category: 'all',
   query:    '',
   selected: new Set(),
   color:    '#1A1A1A',
-  size:     24,
+  size:     48,
+  previewSize: 24,
   view:     'grid',
   icons:    [],
   svgCache: {}
@@ -995,6 +795,13 @@ function setView(v) {
   document.getElementById('icon-grid').classList.toggle('list-view', v === 'list');
   document.querySelectorAll('.view-btns i').forEach(i =>
     i.classList.toggle('on', i.dataset.view === v));
+}
+
+function setPreviewSize(px) {
+  S.previewSize = px;
+  document.documentElement.style.setProperty('--preview-sz', px + 'px');
+  document.querySelectorAll('.pzb').forEach(b =>
+    b.classList.toggle('on', parseInt(b.dataset.size) === px));
 }
 
 // ── Style dropdown ───────────────────────────────────────────────────────
