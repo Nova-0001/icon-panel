@@ -1016,58 +1016,69 @@ async function fetchSVG(url) {
   return text;
 }
 
-function colorizeSVG(svgText, color, colorMode) {
+function colorizeSVG(svgText, color, colorMode, size) {
   const parser = new DOMParser();
   const doc    = parser.parseFromString(svgText, 'image/svg+xml');
   const svg    = doc.documentElement;
 
   if (colorMode === 'stroke') {
-    // Tabler: stroke-based paths
     svg.setAttribute('stroke', color);
     svg.querySelectorAll('[stroke]').forEach(el => {
       if (el.getAttribute('stroke') !== 'none') el.setAttribute('stroke', color);
     });
   } else {
-    // Fill-based (Material, Phosphor, Fluent)
     svg.setAttribute('fill', color);
     svg.querySelectorAll('[fill]').forEach(el => {
       if (el.getAttribute('fill') !== 'none') el.setAttribute('fill', color);
     });
   }
 
-  // Strip fixed dimensions; PowerPoint controls placement via ShapeAddOptions
-  svg.removeAttribute('width');
-  svg.removeAttribute('height');
+  // Set explicit size so PowerPoint sizes the shape correctly on insertion
+  svg.setAttribute('width',  size + 'px');
+  svg.setAttribute('height', size + 'px');
 
   return new XMLSerializer().serializeToString(svg);
 }
 
 // ── Office.js insertion ──────────────────────────────────────────────────
 
+function insertSvgAsync(svgString) {
+  return new Promise((resolve, reject) => {
+    Office.context.document.setSelectedDataAsync(
+      svgString,
+      { coercionType: Office.CoercionType.XmlSvg },
+      result => {
+        if (result.status === Office.AsyncResultStatus.Failed) {
+          reject(new Error(result.error.message));
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
+}
+
 async function insertSelected() {
   if (!S.selected.size) return;
 
   const btn    = document.getElementById('ins-btn');
   const status = document.getElementById('status');
-  btn.disabled    = true;
-  btn.textContent = 'Fetching SVGs…';
+  btn.disabled       = true;
+  btn.textContent    = 'Fetching SVGs…';
   status.textContent = '';
   status.className   = '';
 
-  const lib    = LIBS[S.lib];
-  const icons  = ICON_DATA[S.lib].filter(ic => S.selected.has(ic.name));
-  const sizePt = Math.round(S.size * 0.75);   // screen px → points (approximate at 96 dpi)
-  const gap    = Math.round(sizePt * 0.3);
+  const lib   = LIBS[S.lib];
+  const icons = ICON_DATA[S.lib].filter(ic => S.selected.has(ic.name));
   const errors = [];
 
   try {
-    // Pre-fetch all SVGs before opening PowerPoint.run context
     const svgMap = {};
     for (const ic of icons) {
       try {
         const url = lib.svgUrl(ic, S.style, S.size);
         const raw = await fetchSVG(url);
-        svgMap[ic.name] = colorizeSVG(raw, S.color, lib.colorMode);
+        svgMap[ic.name] = colorizeSVG(raw, S.color, lib.colorMode, S.size);
       } catch (e) {
         errors.push(ic.label);
       }
@@ -1075,29 +1086,14 @@ async function insertSelected() {
 
     btn.textContent = 'Inserting…';
 
-    await PowerPoint.run(async (context) => {
-      const slides = context.presentation.slides;
-      slides.load('items');
-      await context.sync();
-
-      if (!slides.items.length) throw new Error('No slides found.');
-
-      // Insert on the first slide.
-      // To target the active slide, upgrade to PowerPoint JS API 1.5 and use
-      // context.presentation.getSelectedSlides().getItemAt(0)
-      const slide = slides.items[0];
-
-      let left = 50;
-      const top = 50;
-
-      for (const ic of icons) {
-        if (!svgMap[ic.name]) continue;
-        slide.shapes.addSvg(svgMap[ic.name], { left, top, width: sizePt, height: sizePt });
-        left += sizePt + gap;
+    for (const ic of icons) {
+      if (!svgMap[ic.name]) continue;
+      try {
+        await insertSvgAsync(svgMap[ic.name]);
+      } catch (e) {
+        errors.push(ic.label);
       }
-
-      await context.sync();
-    });
+    }
 
     const inserted = icons.length - errors.length;
     status.textContent = inserted
