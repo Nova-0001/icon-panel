@@ -305,11 +305,16 @@
     /* ── Insert button ────────────────────────────────────── */
     #ins-btn {
       width: 100%; padding: 7px; font-size: 12px; font-weight: 600;
-      border-radius: 5px; background: #0078d4; color: #fff; border: none;
-      margin-top: 2px;
+      border-radius: 5px; margin-top: 2px;
+      /* Disabled / nothing selected: outlined */
+      border: 1.5px solid #0078d4; background: #fff; color: #0078d4; cursor: default;
     }
-    #ins-btn:not(:disabled):hover { background: #106ebe; }
-    #ins-btn:disabled { opacity: .35; cursor: default; }
+    #ins-btn:not(:disabled) {
+      /* Active / icons selected: filled (inverted) */
+      background: #0078d4; color: #fff; cursor: pointer;
+    }
+    #ins-btn:not(:disabled):hover { background: #106ebe; border-color: #106ebe; }
+    #ins-btn:disabled { opacity: 1; }
 
     #status {
       font-size: 11px; text-align: center;
@@ -326,13 +331,7 @@
   <!-- Fixed top panel -->
   <div id="top-panel">
 
-    <div id="app-header">
-      <span class="hdr-title">Icon Panel&#8482; <span style="font-weight:400;color:#888">by Themis</span></span>
-      <div class="hdr-btns">
-        <button class="hdr-btn" onclick="toggleAbout()" title="About"><i class="ti ti-info-circle" aria-hidden="true"></i></button>
-        <button class="hdr-btn" onclick="closePane()"   title="Close"><i class="ti ti-x"           aria-hidden="true"></i></button>
-      </div>
-    </div>
+    <div id="app-header"><span class="hdr-title">Icon Panel&#8482; <span style="font-weight:400;color:#888;font-size:11px">by Themis</span></span></div>
 
     <!-- Search -->
     <div class="section" style="padding:10px 12px">
@@ -936,7 +935,6 @@ function renderSelBar() {
   const btn = document.getElementById('ins-btn');
 
   btn.disabled = n === 0;
-  btn.style.opacity = n === 0 ? '.35' : '1';
   document.getElementById('sel-label').textContent =
     n === 1 ? '1 selected' : `${n} selected`;
   btn.textContent = n === 0
