@@ -158,12 +158,7 @@
     }
     .refresh-btn:hover { text-decoration: underline; }
 
-    .shapes-list {
-      max-height: 140px;
-      overflow-y: auto;
-      border: 1px solid #e8e8e8;
-      border-radius: 4px;
-    }
+
     .shape-row {
       display: flex;
       align-items: center;
@@ -205,23 +200,6 @@
       color: #bbb;
     }
 
-    /* ── Slide size ────────────────────────────────────── */
-    .slide-btns {
-      display: flex;
-      gap: 4px;
-    }
-    .ss-btn {
-      flex: 1;
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: #fff;
-      font-size: 10px;
-      color: #666;
-    }
-    .ss-btn:hover { border-color: #aaa; }
-    .ss-btn.on { border-color: #0078d4; background: #dbeeff; color: #0078d4; font-weight: 600; }
-
     /* ── Status ────────────────────────────────────────── */
     #status {
       padding: 8px 12px;
@@ -234,6 +212,53 @@
     #status.ok  { color: #1a1a1a; }
     #status.err { color: #c62828; }
     #status.warn { color: #b45900; }
+
+    /* ── Align To text size (no icons) ───────────────── */
+    .at-btn { padding: 8px 4px 7px; }
+    .at-btn span { font-size: 12px; font-weight: 600; letter-spacing: 0; }
+
+    /* ── Spacing input — narrow ───────────────────────── */
+    .spacing-input-wrap input { width: 52px; min-width: 0; flex: none; }
+
+    /* ── Icon buttons (mirror + stack order) ─────────── */
+    .icon-btn-row { display: flex; gap: 4px; }
+    .icon-btn {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 5px; padding: 9px 4px 7px;
+      border: 1px solid #e0e0e0; border-radius: 5px;
+      background: #fff; color: #555;
+      transition: all .1s; cursor: pointer;
+    }
+    .icon-btn i   { font-size: 18px; line-height: 1; }
+    .icon-btn svg { display: block; width: 22px; height: 22px; }
+    .icon-btn span { font-size: 9px; font-weight: 600; color: #666; letter-spacing: .01em; white-space: nowrap; }
+    .icon-btn:hover { border-color: #0078d4; background: #dbeeff; color: #0078d4; }
+    .icon-btn:hover span { color: #0078d4; }
+    .icon-btn:active { background: #bdd9f5; }
+
+    /* ── Key Object section (Option B) ───────────────── */
+    .key-instr { font-size: 10px; color: #999; line-height: 1.5; margin-bottom: 8px; }
+    .set-key-btn {
+      width: 100%; padding: 7px 10px;
+      border: 1.5px solid #0078d4; border-radius: 5px;
+      background: #fff; color: #0078d4;
+      font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .set-key-btn i { font-size: 14px; }
+    .set-key-btn:hover { background: #dbeeff; }
+    .key-display {
+      display: none; align-items: center; gap: 7px;
+      padding: 7px 9px; background: #fff8e7;
+      border: 1px solid #f0a500; border-radius: 5px;
+    }
+    .key-display i { font-size: 14px; color: #f0a500; flex-shrink: 0; }
+    .key-name-text { flex: 1; font-size: 11px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .clear-key-btn { border: none; background: none; color: #bbb; padding: 2px; display: flex; align-items: center; cursor: pointer; }
+    .clear-key-btn:hover { color: #555; }
+    .key-after { font-size: 10px; color: #aaa; line-height: 1.5; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -246,17 +271,14 @@
       <div class="align-to-row">
 
         <button class="at-btn on" data-target="selection" onclick="setTarget('selection')" title="Align to the bounding box of all selected objects">
-          <i class="ti ti-vector-triangle"></i>
           <span>Selection</span>
         </button>
 
-        <button class="at-btn" data-target="key" onclick="setTarget('key')" title="Align to the Key Object — it stays fixed, everything else moves">
-          <i class="ti ti-star"></i>
+        <button class="at-btn" data-target="key" onclick="setTarget('key')" title="Align to a Key Object that stays fixed">
           <span>Key Object</span>
         </button>
 
         <button class="at-btn" data-target="slide" onclick="setTarget('slide')" title="Align to the slide canvas">
-          <i class="ti ti-layout-2"></i>
           <span>Slide</span>
         </button>
 
@@ -423,31 +445,83 @@
       </div>
     </div>
 
-    <!-- ── KEY OBJECT LIST ───────────────────────────── -->
+    <!-- ── KEY OBJECT (Option B) ────────────────────── -->
     <div class="section" id="key-section">
-      <div class="shapes-header">
-        <span id="sel-count">0 objects</span>
-        <button class="refresh-btn" onclick="readSelection()">
-          <i class="ti ti-refresh" style="font-size:12px"></i>
-          Refresh
+      <div class="section-label">Key Object</div>
+      <p class="key-instr">In PowerPoint, select the object you want to use as the anchor. Then:</p>
+      <button id="set-key-btn" class="set-key-btn" onclick="setKeyFromSelection()">
+        <i class="ti ti-star"></i>
+        Set as Key Object
+      </button>
+      <div id="key-display" class="key-display" style="margin-top:8px">
+        <i class="ti ti-star-filled"></i>
+        <span id="key-name" class="key-name-text">—</span>
+        <button class="clear-key-btn" onclick="clearKey()" title="Clear key object">
+          <i class="ti ti-x"></i>
         </button>
       </div>
-      <div class="shapes-list" id="shapes-list">
-        <div class="empty-msg">Select objects in PowerPoint, then click Refresh</div>
-      </div>
-      <div style="margin-top:6px;font-size:10px;color:#bbb;line-height:1.4">
-        Click a shape to set it as the Key Object. It will not move — all other objects align to it.
+      <p class="key-after">Now select all objects to align, then click an action above. The key object will not move.</p>
+    </div>
+
+    <!-- ── MIRROR ──────────────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Mirror</div>
+      <div class="icon-btn-row">
+
+        <button class="icon-btn" onclick="doFlip('h')" title="Flip horizontally — mirror left to right">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="2" y="6" width="7" height="10" rx=".8" fill="#888"/>
+            <rect x="13" y="6" width="7" height="10" rx=".8" fill="#ccc"/>
+            <line x1="11" y1="2" x2="11" y2="20" stroke="#0078d4" stroke-width="1.5" stroke-dasharray="2.5,2"/>
+            <line x1="8" y1="9" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="8" y1="13" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="14" y1="9" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="14" y1="13" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <span>Horizontal</span>
+        </button>
+
+        <button class="icon-btn" onclick="doFlip('v')" title="Flip vertically — mirror top to bottom">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="5" y="2" width="12" height="7" rx=".8" fill="#888"/>
+            <rect x="5" y="13" width="12" height="7" rx=".8" fill="#ccc"/>
+            <line x1="2" y1="11" x2="20" y2="11" stroke="#0078d4" stroke-width="1.5" stroke-dasharray="2.5,2"/>
+            <line x1="9" y1="8" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="13" y1="8" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="9" y1="14" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+            <line x1="13" y1="14" x2="11" y2="11" stroke="#0078d4" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <span>Vertical</span>
+        </button>
+
       </div>
     </div>
 
-    <!-- ── SLIDE SIZE ────────────────────────────────── -->
+    <!-- ── STACK ORDER ───────────────────────────────── -->
     <div class="section">
-      <div class="section-label">Slide Size</div>
-      <div class="slide-btns">
-        <button class="ss-btn on" data-w="720" data-h="405" onclick="setSlide(720,405,this)"
-                title="Widescreen 16:9 — 10 × 5.625 inches">16:9 Widescreen</button>
-        <button class="ss-btn"    data-w="720" data-h="540" onclick="setSlide(720,540,this)"
-                title="Standard 4:3 — 10 × 7.5 inches">4:3 Standard</button>
+      <div class="section-label">Stack Order</div>
+      <div class="icon-btn-row">
+
+        <button class="icon-btn" onclick="doZOrder('bringToFront')" title="Bring to Front">
+          <i class="ti ti-arrow-bar-to-up"></i>
+          <span>To Front</span>
+        </button>
+
+        <button class="icon-btn" onclick="doZOrder('bringForward')" title="Bring Forward one step">
+          <i class="ti ti-arrow-up"></i>
+          <span>Forward</span>
+        </button>
+
+        <button class="icon-btn" onclick="doZOrder('sendBackward')" title="Send Backward one step">
+          <i class="ti ti-arrow-down"></i>
+          <span>Backward</span>
+        </button>
+
+        <button class="icon-btn" onclick="doZOrder('sendToBack')" title="Send to Back">
+          <i class="ti ti-arrow-bar-to-down"></i>
+          <span>To Back</span>
+        </button>
+
       </div>
     </div>
 
@@ -464,53 +538,105 @@ const MM_TO_PT = 2.8346;
 // ── State ─────────────────────────────────────────────────────────────────
 
 const S = {
-  target:    'selection', // 'selection' | 'key' | 'slide'
+  target:    'selection',
   keyId:     null,
-  shapes:    [],           // [{id, name, left, top, width, height}]
+  keyName:   null,
+  shapes:    [],
   spacingMm: 0,
-  slideW:    720,          // points  (default 16:9 widescreen)
-  slideH:    405,
+  slideW:    null,
+  slideH:    null,
 };
+
+// ── Slide size detection ──────────────────────────────────────────────────
+//
+// PowerPoint JS API exposes presentation.width / presentation.height in points.
+// The unit may be points (typical ~720 × 405 for widescreen) or EMUs
+// (English Metric Units: 914400 per inch). We detect which and convert.
+// All shape coordinates we read are already in points, so the result must
+// also be in points before being used in getRef().
+
+async function readSlideSize(ctx) {
+  // Step 1 — load the shapes on the first slide so we have a concrete sync
+  //           (shapes are in points; their scale is our unit reference)
+  const slide = ctx.presentation.slides.getItemAt(0);
+  slide.shapes.load(['left', 'top', 'width', 'height']);
+
+  // Step 2 — request presentation dimensions in the same context
+  ctx.presentation.load(['width', 'height']);
+
+  await ctx.sync();
+
+  let pw = ctx.presentation.width;
+  let ph = ctx.presentation.height;
+
+  if (pw && ph && pw > 0 && ph > 0) {
+    // If the value is very large it is in EMUs (914400 per inch).
+    // Points = EMU / 12700.  A 10-inch-wide slide in EMUs = 9144000;
+    // in points = 720.  Threshold: anything > 5000 is almost certainly EMUs.
+    if (pw > 5000) { pw = pw / 12700; ph = ph / 12700; }
+
+    // Sanity check: a slide is always at least 2 inches (144pt) in each dimension
+    if (pw >= 144 && ph >= 144) {
+      S.slideW = pw;
+      S.slideH = ph;
+      return;
+    }
+  }
+
+  // Fallback: infer from the bounding box of all shapes on the slide.
+  // Not perfect (shapes may not reach the edges) but better than a hard-coded guess.
+  const items = slide.shapes.items;
+  if (items.length > 0) {
+    const maxR = Math.max(...items.map(s => s.left + s.width));
+    const maxB = Math.max(...items.map(s => s.top  + s.height));
+    // These are lower bounds on the slide size. Use common ratios to round up
+    // to the nearest standard height given a 720pt-wide canvas.
+    S.slideW = Math.max(maxR, 720);
+    S.slideH = maxB > 0 ? Math.max(maxB, maxR * 0.5625) : S.slideW * 0.5625;
+    return;
+  }
+
+  // Last resort — widescreen 16:9
+  S.slideW = 720;
+  S.slideH = 405;
+}
 
 // ── PowerPoint API ────────────────────────────────────────────────────────
 
 async function readSelection() {
   try {
-    setStatus('Reading selection…');
+    setStatus('Reading…');
     await PowerPoint.run(async (ctx) => {
       const sel = ctx.presentation.getSelectedShapes();
       sel.load(['id', 'name', 'left', 'top', 'width', 'height']);
-      await ctx.sync();
+      await readSlideSize(ctx);  // always measure the slide
+      await ctx.sync();          // sync the shapes load
 
       S.shapes = sel.items.map(sh => ({
-        id:     sh.id,
-        name:   sh.name || 'Shape',
-        left:   sh.left,
-        top:    sh.top,
-        width:  sh.width,
-        height: sh.height,
+        id: sh.id, name: sh.name || 'Shape',
+        left: sh.left, top: sh.top,
+        width: sh.width, height: sh.height,
       }));
     });
 
-    // Ensure keyId is valid
     if (S.target === 'key') {
       if (!S.keyId || !S.shapes.find(s => s.id === S.keyId)) {
         S.keyId = S.shapes.length ? S.shapes[0].id : null;
       }
     }
 
-    renderShapesList();
     const n = S.shapes.length;
+    const dim = S.slideW ? ` (slide ${Math.round(S.slideW)}×${Math.round(S.slideH)}pt)` : '';
     setStatus(n === 0
       ? 'No objects selected in PowerPoint.'
-      : `${n} object${n > 1 ? 's' : ''} ready.`, n ? 'ok' : 'warn');
+      : `${n} object${n > 1 ? 's' : ''} ready${dim}.`, n ? 'ok' : 'warn');
   } catch (e) {
     setStatus('Error: ' + e.message + (e.message.includes('getSelectedShapes')
-      ? ' — PowerPoint JS API 1.5 required. Update Office to use this panel.' : ''), 'err');
+      ? ' — Requires PowerPoint JS API 1.5. Update Office.' : ''), 'err');
   }
 }
 
-// Core: read current selection, compute new positions, write back — all in one context
+// Core: read selection + slide size, compute, write back — all in one context
 async function executeOp(computeFn) {
   try {
     setStatus('Applying…');
@@ -519,14 +645,16 @@ async function executeOp(computeFn) {
     await PowerPoint.run(async (ctx) => {
       const sel = ctx.presentation.getSelectedShapes();
       sel.load(['id', 'name', 'left', 'top', 'width', 'height']);
-      await ctx.sync();
 
+      // Always measure the slide before using it as a reference
+      await readSlideSize(ctx);
+
+      // readSlideSize already called ctx.sync(); the shapes are now loaded too
       if (!sel.items.length) {
         setStatus('No objects selected in PowerPoint.', 'warn');
         return;
       }
 
-      // Sync local state with current selection
       const shapes = sel.items.map(sh => ({
         id: sh.id, name: sh.name || 'Shape',
         left: sh.left, top: sh.top,
@@ -535,15 +663,12 @@ async function executeOp(computeFn) {
 
       S.shapes = shapes;
 
-      // Ensure key is valid
       if (S.target === 'key' && (!S.keyId || !shapes.find(s => s.id === S.keyId))) {
         S.keyId = shapes[0].id;
       }
 
-      // Compute new positions
       const updated = computeFn(shapes);
 
-      // Apply to proxies
       updated.forEach(upd => {
         const proxy = sel.items.find(s => s.id === upd.id);
         if (proxy) {
@@ -559,7 +684,6 @@ async function executeOp(computeFn) {
 
     if (count) {
       setStatus(`Applied to ${count} object${count > 1 ? 's' : ''}.`, 'ok');
-      renderShapesList();
     }
   } catch (e) {
     setStatus('Error: ' + e.message, 'err');
@@ -727,45 +851,88 @@ function setTarget(t) {
   const ks = document.getElementById('key-section');
   ks.classList.toggle('visible', t === 'key');
 
-  // Auto-read selection when switching to key mode if we don't have shapes
-  if (t === 'key' && !S.shapes.length) readSelection();
-
-  renderShapesList();
 }
 
-function setSlide(w, h, btn) {
-  S.slideW = w;
-  S.slideH = h;
-  document.querySelectorAll('.ss-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
+// ── Key Object (Option B) ─────────────────────────────────────────────
+
+async function setKeyFromSelection() {
+  try {
+    setStatus('Reading key object…');
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load(['id', 'name']);
+      await ctx.sync();
+
+      if (!sel.items.length) {
+        setStatus('Nothing selected. Click your key object in PowerPoint first.', 'warn');
+        return;
+      }
+      if (sel.items.length > 1) {
+        setStatus(`${sel.items.length} objects selected — using the first as key. Select only one for precision.`, 'warn');
+      }
+
+      S.keyId   = sel.items[0].id;
+      S.keyName = sel.items[0].name || 'Shape';
+    });
+
+    if (S.keyId) {
+      document.getElementById('key-name').textContent = S.keyName;
+      document.getElementById('key-display').style.display = 'flex';
+      setStatus(`Key: "${S.keyName}" — now select all objects and click an alignment action.`, 'ok');
+    }
+  } catch (e) { setStatus('Error: ' + e.message, 'err'); }
 }
 
-function setKeyShape(id) {
-  S.keyId = id;
-  renderShapesList();
+function clearKey() {
+  S.keyId   = null;
+  S.keyName = null;
+  document.getElementById('key-display').style.display = 'none';
+  setStatus('Key object cleared.');
 }
 
-function renderShapesList() {
-  const list  = document.getElementById('shapes-list');
-  const count = document.getElementById('sel-count');
+// ── Mirror / Flip ─────────────────────────────────────────────────────
 
-  if (!S.shapes.length) {
-    count.textContent = '0 objects';
-    list.innerHTML = '<div class="empty-msg">Select objects in PowerPoint, then click Refresh</div>';
-    return;
-  }
+async function doFlip(dir) {
+  try {
+    setStatus('Flipping…');
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('id');
+      await ctx.sync();
+      if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
+      sel.items.forEach(sh => {
+        if (dir === 'h') sh.flipHorizontal();
+        else             sh.flipVertical();
+      });
+      await ctx.sync();
+    });
+    setStatus(`Flipped ${dir === 'h' ? 'horizontally' : 'vertically'}.`, 'ok');
+  } catch (e) { setStatus('Flip error: ' + e.message, 'err'); }
+}
 
-  count.textContent = `${S.shapes.length} object${S.shapes.length > 1 ? 's' : ''}`;
+// ── Stack Order ───────────────────────────────────────────────────────
 
-  list.innerHTML = S.shapes.map(sh => {
-    const isKey = sh.id === S.keyId;
-    const safe  = sh.id.replace(/'/g, "\\'");
-    return `<div class="shape-row ${isKey ? 'key-row' : ''}" onclick="setKeyShape('${safe}')" title="${isKey ? 'Key Object — stays fixed' : 'Click to set as Key Object'}">
-      <span class="key-dot">${isKey ? '★' : '○'}</span>
-      <span class="shape-name">${sh.name}</span>
-      ${isKey ? '<span class="key-badge">KEY</span>' : ''}
-    </div>`;
-  }).join('');
+async function doZOrder(op) {
+  try {
+    setStatus('Reordering…');
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('id');
+      await ctx.sync();
+      if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
+      const ZO = PowerPoint.ShapeZOrder;
+      sel.items.forEach(sh => {
+        switch (op) {
+          case 'bringToFront': sh.setZOrder(ZO.bringToFront);  break;
+          case 'bringForward': sh.setZOrder(ZO.bringForward);  break;
+          case 'sendBackward': sh.setZOrder(ZO.sendBackward);  break;
+          case 'sendToBack':   sh.setZOrder(ZO.sendToBack);    break;
+        }
+      });
+      await ctx.sync();
+    });
+    setStatus('Stack order updated.', 'ok');
+  } catch (e) { setStatus('Z-order error: ' + e.message, 'err'); }
 }
 
 function setStatus(msg, type) {
