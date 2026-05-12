@@ -27,23 +27,7 @@
     #scroll-area{ flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
     #sel-bar    { flex-shrink: 0; }
 
-    /* ── Panel header ─────────────────────────────────────── */
-    #app-header {
-      padding: 6px 8px 6px 12px;
-      background: #fff; border-bottom: 1px solid #e8e8e8;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    #app-header .hdr-title {
-      font-size: 12px; font-weight: 700; color: #1a1a1a; letter-spacing: -.01em;
-    }
-    .hdr-btns { display: flex; gap: 2px; }
-    .hdr-btn {
-      width: 26px; height: 26px; border: none; background: none;
-      cursor: pointer; border-radius: 5px; color: #777; padding: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .hdr-btn:hover { background: #f0f0f0; color: #1a1a1a; }
-    .hdr-btn i { font-size: 16px; line-height: 1; }
+
 
     input, button, select { font-family: inherit; font-size: inherit; }
     button { cursor: pointer; }
@@ -331,7 +315,6 @@
   <!-- Fixed top panel -->
   <div id="top-panel">
 
-    <div id="app-header"><span class="hdr-title">Icon Panel&#8482; <span style="font-weight:400;color:#888;font-size:11px">by Themis</span></span></div>
 
     <!-- Search -->
     <div class="section" style="padding:10px 12px">
@@ -957,8 +940,9 @@ function renderSelBar() {
     chip.className = 'prev-chip';
     // Use escaped name in onclick to avoid injection
     const safe = name.replace(/'/g, "\\'");
+    const chipSrc = LIBS[S.lib].svgUrl({name}, S.style, 24);
     chip.innerHTML =
-      `<i class="ti ${tablerFor(name)}" aria-hidden="true"></i>` +
+      `<img src="${chipSrc}" width="20" height="20" alt="${name}" style="display:block;pointer-events:none">` +
       `<div class="rm" role="button" aria-label="Remove ${name}" onclick="removeOne('${safe}')">` +
       `<i class="ti ti-x" aria-hidden="true"></i></div>`;
     strip.appendChild(chip);
