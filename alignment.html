@@ -659,8 +659,8 @@ async function executeOp(computeFn) {
     });
 
     if (count) {
-      const dimNote = (S.target === 'slide' && S.slideW)
-        ? ` (slide ${Math.round(S.slideW)}×${Math.round(S.slideH)}pt)`
+      const dimNote = S.slideW
+        ? ` — slide measured as ${Math.round(S.slideW)}×${Math.round(S.slideH)}pt`
         : '';
       setStatus(`Applied to ${count} object${count > 1 ? 's' : ''}${dimNote}.`, 'ok');
     }
@@ -836,6 +836,12 @@ function setTarget(t) {
   // Show slide dimension row when Slide mode is active
   const dimRow = document.getElementById('slide-dim-row');
   if (dimRow) dimRow.style.display = t === 'slide' ? 'block' : 'none';
+
+  // When switching to Slide mode, immediately detect dimensions so
+  // inputs are pre-filled before the user clicks an alignment button.
+  if (t === 'slide') {
+    PowerPoint.run(async ctx => { await readSlideSize(ctx); }).catch(() => {});
+  }
 }
 
 // ── Key Object (Option B) ─────────────────────────────────────────────
@@ -884,24 +890,16 @@ function adjustSpacing(delta) {
 // ── Mirror / Flip ─────────────────────────────────────────────────────
 
 async function doFlip(dir) {
-  // shape.flip('Horizontal') / shape.flip('Vertical') is the correct Office JS call.
-  // It mirrors the VBA Shape.Flip(msoFlipHorizontal) behaviour:
-  // each call toggles — calling it twice returns the shape to its original state.
-  // No client-side state tracking needed.
-  const cmd = dir === 'h' ? 'Horizontal' : 'Vertical';
-  try {
-    setStatus('Flipping…');
-    let count = 0;
-    await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes();
-      sel.load('id');
-      await ctx.sync();
-      if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
-      sel.items.forEach(sh => { sh.flip(cmd); count++; });
-      await ctx.sync();
-    });
-    setStatus(`Flipped ${count} object${count > 1 ? 's' : ''} ${dir === 'h' ? 'horizontally' : 'vertically'}.`, 'ok');
-  } catch (e) { setStatus('Flip error: ' + e.message, 'err'); }
+  // The PowerPoint Office JS API does not expose a flip/mirror method on Shape.
+  // Shape.flip() is not in the published API (confirmed from official docs).
+  // The only available path is the native PowerPoint menu:
+  //   Arrange › Rotate or Flip › Flip Horizontal / Flip Vertical
+  // We show a clear message directing the user there.
+  const label = dir === 'h' ? 'Horizontal' : 'Vertical';
+  setStatus(
+    `Mirror not available via API. In PowerPoint: Arrange › Rotate or Flip › Flip ${label}.`,
+    'warn'
+  );
 }
 
 // ── Reset Text Box ───────────────────────────────────────────────────────
@@ -910,20 +908,28 @@ async function doFlip(dir) {
 // Also descends one level into groups to reach grouped text boxes.
 
 async function resetTextBoxes() {
-  // hasTextFrame is not reliably loadable in all Office versions.
-  // Apply textFrame properties to all selected shapes directly.
-  // PowerPoint silently ignores the operation on shapes that lack text frames;
-  // shapes that DO have them get updated.
+  // The textFrame property throws InvalidArgument for shapes that don't
+  // support it. We must filter to text box shapes first using shape.type.
   try {
     setStatus('Resetting…');
     let count = 0;
     await PowerPoint.run(async ctx => {
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load(['id', 'name']);
+      sel.load(['id', 'name', 'type']);
       await ctx.sync();
       if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
-      count = sel.items.length;
-      sel.items.forEach(sh => {
+
+      // Filter: only shapes whose type is TextBox support the textFrame API
+      const boxes = sel.items.filter(sh =>
+        sh.type === PowerPoint.ShapeType.textBox || sh.type === 'TextBox'
+      );
+
+      if (!boxes.length) {
+        setStatus('Select text box shapes (Insert › Text Box) first.', 'warn');
+        return;
+      }
+
+      boxes.forEach(sh => {
         const tf = sh.textFrame;
         tf.autoSizeSetting = PowerPoint.ShapeAutoSize.autoSizeNone;
         tf.leftMargin   = 0;
@@ -931,10 +937,12 @@ async function resetTextBoxes() {
         tf.topMargin    = 0;
         tf.bottomMargin = 0;
         tf.wordWrap     = true;
+        count++;
       });
+
       await ctx.sync();
     });
-    setStatus(`Reset ${count} text box${count !== 1 ? 'es' : ''}.`, 'ok');
+    if (count) setStatus(`Reset ${count} text box${count !== 1 ? 'es' : ''}.`, 'ok');
   } catch (e) { setStatus('Reset error: ' + e.message, 'err'); }
 }
 
