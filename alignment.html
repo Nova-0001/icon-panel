@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alignment Panel</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 12px;
+      background: #fff;
+      color: #1a1a1a;
+    }
+
+    button { font-family: inherit; font-size: inherit; cursor: pointer; }
+
+    ::-webkit-scrollbar { width: 16px; }
+    ::-webkit-scrollbar-thumb { background: #c8c8c8; border-radius: 8px; border: 4px solid transparent; background-clip: padding-box; }
+
+    /* ── Layout ────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    #scroll-area { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+
+    /* ── Section ───────────────────────────────────────── */
+    .section {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ebebeb;
+    }
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    /* ── Align To buttons ──────────────────────────────── */
+    .align-to-row {
+      display: flex;
+      gap: 4px;
+    }
+    .at-btn {
+      flex: 1;
+      padding: 6px 4px 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #fff;
+      color: #666;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all .1s;
+      user-select: none;
+    }
+    .at-btn i { font-size: 18px; }
+    .at-btn span { font-size: 9px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+    .at-btn:hover { border-color: #aaa; color: #333; background: #f7f7f7; }
+    .at-btn.on {
+      border-color: #0078d4;
+      background: #dbeeff;
+      color: #0078d4;
+    }
+
+    /* ── Action button grid ────────────────────────────── */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px;
+    }
+    .btn-grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .btn-divider {
+      grid-column: span 1;
+      border: none;
+      border-left: 1px solid #e0e0e0;
+      width: 1px;
+      margin: 3px 0;
+    }
+
+    .act-btn {
+      width: 100%;
+      aspect-ratio: 1;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      color: #444;
+      transition: all .1s;
+    }
+    .act-btn svg { width: 22px; height: 22px; display: block; }
+    .act-btn:hover { border-color: #0078d4; background: #dbeeff; color: #0078d4; }
+    .act-btn:hover svg .ind { stroke: #0078d4; }
+    .act-btn:active { background: #bdd9f5; }
+
+    /* ── Tabler icon buttons (align) ───────────────────── */
+    .act-btn i { font-size: 18px; }
+
+    /* ── Distribute Spacing row ────────────────────────── */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0;
+    }
+    .spacing-btns { display: flex; gap: 3px; }
+    .spacing-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+    }
+    .spacing-input-wrap input {
+      flex: 1;
+      min-width: 0;
+      padding: 4px 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      text-align: right;
+      outline: none;
+    }
+    .spacing-input-wrap input:focus { border-color: #0078d4; }
+    .spacing-input-wrap span { font-size: 10px; color: #888; white-space: nowrap; }
+
+    /* ── Key object list ───────────────────────────────── */
+    #key-section { display: none; }
+    #key-section.visible { display: block; }
+
+    .shapes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .shapes-header span { font-size: 11px; color: #555; }
+    .refresh-btn {
+      border: none;
+      background: none;
+      color: #0078d4;
+      font-size: 11px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .refresh-btn:hover { text-decoration: underline; }
+
+    .shapes-list {
+      max-height: 140px;
+      overflow-y: auto;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+    }
+    .shape-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background .1s;
+      user-select: none;
+    }
+    .shape-row:last-child { border-bottom: none; }
+    .shape-row:hover { background: #f5f5f5; }
+    .shape-row.key-row { background: #fff8e7; }
+    .shape-row.key-row:hover { background: #fff3d4; }
+    .key-dot { font-size: 14px; flex-shrink: 0; }
+    .shape-name {
+      flex: 1;
+      font-size: 11px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .key-badge {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: #f0a500;
+      background: #fff3d4;
+      border: 1px solid #f0a500;
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+
+    .empty-msg {
+      padding: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: #bbb;
+    }
+
+    /* ── Slide size ────────────────────────────────────── */
+    .slide-btns {
+      display: flex;
+      gap: 4px;
+    }
+    .ss-btn {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 10px;
+      color: #666;
+    }
+    .ss-btn:hover { border-color: #aaa; }
+    .ss-btn.on { border-color: #0078d4; background: #dbeeff; color: #0078d4; font-weight: 600; }
+
+    /* ── Status ────────────────────────────────────────── */
+    #status {
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #888;
+      min-height: 32px;
+      background: #fafafa;
+      border-top: 1px solid #ebebeb;
+    }
+    #status.ok  { color: #1a1a1a; }
+    #status.err { color: #c62828; }
+    #status.warn { color: #b45900; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="scroll-area">
+
+    <!-- ── ALIGN TO ─────────────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Align To</div>
+      <div class="align-to-row">
+
+        <button class="at-btn on" data-target="selection" onclick="setTarget('selection')" title="Align to the bounding box of all selected objects">
+          <i class="ti ti-vector-triangle"></i>
+          <span>Selection</span>
+        </button>
+
+        <button class="at-btn" data-target="key" onclick="setTarget('key')" title="Align to the Key Object — it stays fixed, everything else moves">
+          <i class="ti ti-star"></i>
+          <span>Key Object</span>
+        </button>
+
+        <button class="at-btn" data-target="slide" onclick="setTarget('slide')" title="Align to the slide canvas">
+          <i class="ti ti-layout-2"></i>
+          <span>Slide</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── ALIGN OBJECTS ────────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Align Objects</div>
+      <div class="btn-grid">
+
+        <!-- Horizontal: left, center, right -->
+        <button class="act-btn" onclick="doAlign('left')"    title="Align left edges">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="4" y="5" width="7" height="5" rx=".8" fill="#888"/><rect x="4" y="12" width="12" height="5" rx=".8" fill="#888"/><line x1="3" y1="3" x2="3" y2="19" stroke="#0078d4" class="ind" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button class="act-btn" onclick="doAlign('centerH')" title="Align horizontal centers">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="7" y="5"  width="8"  height="5" rx=".8" fill="#888"/><rect x="4" y="12" width="14" height="5" rx=".8" fill="#888"/><line x1="11" y1="3" x2="11" y2="19" stroke="#0078d4" class="ind" stroke-width="1.5" stroke-dasharray="2.5,2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button class="act-btn" onclick="doAlign('right')"   title="Align right edges">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="11" y="5" width="7" height="5" rx=".8" fill="#888"/><rect x="6"  y="12" width="12" height="5" rx=".8" fill="#888"/><line x1="19" y1="3" x2="19" y2="19" stroke="#0078d4" class="ind" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- Vertical: top, middle, bottom -->
+        <button class="act-btn" onclick="doAlign('top')"     title="Align top edges">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="5"  y="4" width="5"  height="10" rx=".8" fill="#888"/><rect x="12" y="4" width="5"  height="15" rx=".8" fill="#888"/><line x1="3" y1="3" x2="19" y2="3" stroke="#0078d4" class="ind" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button class="act-btn" onclick="doAlign('middleV')" title="Align vertical centers">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="5"  y="6"  width="5"  height="10" rx=".8" fill="#888"/><rect x="12" y="4"  width="5"  height="14" rx=".8" fill="#888"/><line x1="3" y1="11" x2="19" y2="11" stroke="#0078d4" class="ind" stroke-width="1.5" stroke-dasharray="2.5,2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button class="act-btn" onclick="doAlign('bottom')"  title="Align bottom edges">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="5"  y="8"  width="5"  height="10" rx=".8" fill="#888"/><rect x="12" y="3"  width="5"  height="15" rx=".8" fill="#888"/><line x1="3" y1="19" x2="19" y2="19" stroke="#0078d4" class="ind" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── DISTRIBUTE OBJECTS ────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Distribute Objects</div>
+      <div class="btn-grid">
+
+        <!-- Vertical: top edges, centers, bottom edges -->
+        <button class="act-btn" onclick="doDistObj('topEdges')"  title="Distribute top edges equally (vertical)">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="3"  width="16" height="3" rx=".6" fill="#888"/>
+            <line x1="1" y1="3"  x2="21" y2="3"  stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="3" y="10" width="16" height="5" rx=".6" fill="#888"/>
+            <line x1="1" y1="10" x2="21" y2="10" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="3" y="18" width="16" height="2" rx=".6" fill="#888"/>
+            <line x1="1" y1="18" x2="21" y2="18" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+          </svg>
+        </button>
+
+        <button class="act-btn" onclick="doDistObj('vCenters')"  title="Distribute vertical centers equally">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="2"  width="16" height="4" rx=".6" fill="#888"/>
+            <line x1="1" y1="4"  x2="21" y2="4"  stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+            <rect x="3" y="9"  width="16" height="2" rx=".6" fill="#888"/>
+            <line x1="1" y1="10" x2="21" y2="10" stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+            <rect x="3" y="15" width="16" height="4" rx=".6" fill="#888"/>
+            <line x1="1" y1="17" x2="21" y2="17" stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+          </svg>
+        </button>
+
+        <button class="act-btn" onclick="doDistObj('bottomEdges')" title="Distribute bottom edges equally (vertical)">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="2"  width="16" height="2" rx=".6" fill="#888"/>
+            <line x1="1" y1="4"  x2="21" y2="4"  stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="3" y="7"  width="16" height="5" rx=".6" fill="#888"/>
+            <line x1="1" y1="12" x2="21" y2="12" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="3" y="16" width="16" height="3" rx=".6" fill="#888"/>
+            <line x1="1" y1="19" x2="21" y2="19" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+          </svg>
+        </button>
+
+        <!-- Horizontal: left edges, centers, right edges -->
+        <button class="act-btn" onclick="doDistObj('leftEdges')"  title="Distribute left edges equally (horizontal)">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="2"  y="3" width="3"  height="16" rx=".6" fill="#888"/>
+            <line x1="2"  y1="1" x2="2"  y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="9"  y="3" width="5"  height="16" rx=".6" fill="#888"/>
+            <line x1="9"  y1="1" x2="9"  y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="18" y="3" width="2"  height="16" rx=".6" fill="#888"/>
+            <line x1="18" y1="1" x2="18" y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+          </svg>
+        </button>
+
+        <button class="act-btn" onclick="doDistObj('hCenters')"   title="Distribute horizontal centers equally">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="2"  y="3" width="4"  height="16" rx=".6" fill="#888"/>
+            <line x1="4"  y1="1" x2="4"  y2="21" stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+            <rect x="9"  y="3" width="2"  height="16" rx=".6" fill="#888"/>
+            <line x1="10" y1="1" x2="10" y2="21" stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+            <rect x="15" y="3" width="5"  height="16" rx=".6" fill="#888"/>
+            <line x1="17.5" y1="1" x2="17.5" y2="21" stroke="#0078d4" class="ind" stroke-width="1" stroke-dasharray="3,2"/>
+          </svg>
+        </button>
+
+        <button class="act-btn" onclick="doDistObj('rightEdges')" title="Distribute right edges equally (horizontal)">
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="2"  y="3" width="2"  height="16" rx=".6" fill="#888"/>
+            <line x1="4"  y1="1" x2="4"  y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="7"  y="3" width="5"  height="16" rx=".6" fill="#888"/>
+            <line x1="12" y1="1" x2="12" y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+            <rect x="17" y="3" width="3"  height="16" rx=".6" fill="#888"/>
+            <line x1="20" y1="1" x2="20" y2="21" stroke="#0078d4" class="ind" stroke-width="1.5"/>
+          </svg>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── DISTRIBUTE SPACING ────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Distribute Spacing</div>
+      <div class="spacing-row">
+
+        <!-- Two action buttons -->
+        <div class="spacing-btns">
+          <button class="act-btn" style="width:38px;height:38px" onclick="doSpacing('v')" title="Distribute vertical spacing (equal gaps between objects)">
+            <svg viewBox="0 0 22 22" fill="none">
+              <rect x="3" y="1"  width="16" height="4" rx=".6" fill="#888"/>
+              <rect x="3" y="9"  width="16" height="4" rx=".6" fill="#888"/>
+              <rect x="3" y="17" width="16" height="4" rx=".6" fill="#888"/>
+              <line x1="1.5" y1="5"  x2="1.5" y2="9"  stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="1"   y1="5"  x2="2"   y2="5"  stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="1"   y1="9"  x2="2"   y2="9"  stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="1.5" y1="13" x2="1.5" y2="17" stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="1"   y1="13" x2="2"   y2="13" stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="1"   y1="17" x2="2"   y2="17" stroke="#0078d4" class="ind" stroke-width="1.2"/>
+            </svg>
+          </button>
+          <button class="act-btn" style="width:38px;height:38px" onclick="doSpacing('h')" title="Distribute horizontal spacing (equal gaps between objects)">
+            <svg viewBox="0 0 22 22" fill="none">
+              <rect x="1"  y="3" width="4"  height="16" rx=".6" fill="#888"/>
+              <rect x="9"  y="3" width="4"  height="16" rx=".6" fill="#888"/>
+              <rect x="17" y="3" width="4"  height="16" rx=".6" fill="#888"/>
+              <line x1="5"  y1="1.5" x2="9"  y2="1.5" stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="5"  y1="1"   x2="5"  y2="2"   stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="9"  y1="1"   x2="9"  y2="2"   stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="13" y1="1.5" x2="17" y2="1.5" stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="13" y1="1"   x2="13" y2="2"   stroke="#0078d4" class="ind" stroke-width="1.2"/>
+              <line x1="17" y1="1"   x2="17" y2="2"   stroke="#0078d4" class="ind" stroke-width="1.2"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Spacing value -->
+        <div class="spacing-input-wrap">
+          <input type="number" id="spacing-val" value="0" min="0" step="0.5"
+                 oninput="S.spacingMm = parseFloat(this.value) || 0"
+                 title="Spacing value in mm. 0 = auto (equal gaps between outermost objects)">
+          <span>mm</span>
+        </div>
+
+        <span style="font-size:9px;color:#bbb;flex-shrink:0" title="0 = auto space between outermost">
+          0 = auto
+        </span>
+
+      </div>
+    </div>
+
+    <!-- ── KEY OBJECT LIST ───────────────────────────── -->
+    <div class="section" id="key-section">
+      <div class="shapes-header">
+        <span id="sel-count">0 objects</span>
+        <button class="refresh-btn" onclick="readSelection()">
+          <i class="ti ti-refresh" style="font-size:12px"></i>
+          Refresh
+        </button>
+      </div>
+      <div class="shapes-list" id="shapes-list">
+        <div class="empty-msg">Select objects in PowerPoint, then click Refresh</div>
+      </div>
+      <div style="margin-top:6px;font-size:10px;color:#bbb;line-height:1.4">
+        Click a shape to set it as the Key Object. It will not move — all other objects align to it.
+      </div>
+    </div>
+
+    <!-- ── SLIDE SIZE ────────────────────────────────── -->
+    <div class="section">
+      <div class="section-label">Slide Size</div>
+      <div class="slide-btns">
+        <button class="ss-btn on" data-w="720" data-h="405" onclick="setSlide(720,405,this)"
+                title="Widescreen 16:9 — 10 × 5.625 inches">16:9 Widescreen</button>
+        <button class="ss-btn"    data-w="720" data-h="540" onclick="setSlide(720,540,this)"
+                title="Standard 4:3 — 10 × 7.5 inches">4:3 Standard</button>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <div id="status">Select objects in PowerPoint to begin.</div>
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+const MM_TO_PT = 2.8346;
+
+// ── State ─────────────────────────────────────────────────────────────────
+
+const S = {
+  target:    'selection', // 'selection' | 'key' | 'slide'
+  keyId:     null,
+  shapes:    [],           // [{id, name, left, top, width, height}]
+  spacingMm: 0,
+  slideW:    720,          // points  (default 16:9 widescreen)
+  slideH:    405,
+};
+
+// ── PowerPoint API ────────────────────────────────────────────────────────
+
+async function readSelection() {
+  try {
+    setStatus('Reading selection…');
+    await PowerPoint.run(async (ctx) => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load(['id', 'name', 'left', 'top', 'width', 'height']);
+      await ctx.sync();
+
+      S.shapes = sel.items.map(sh => ({
+        id:     sh.id,
+        name:   sh.name || 'Shape',
+        left:   sh.left,
+        top:    sh.top,
+        width:  sh.width,
+        height: sh.height,
+      }));
+    });
+
+    // Ensure keyId is valid
+    if (S.target === 'key') {
+      if (!S.keyId || !S.shapes.find(s => s.id === S.keyId)) {
+        S.keyId = S.shapes.length ? S.shapes[0].id : null;
+      }
+    }
+
+    renderShapesList();
+    const n = S.shapes.length;
+    setStatus(n === 0
+      ? 'No objects selected in PowerPoint.'
+      : `${n} object${n > 1 ? 's' : ''} ready.`, n ? 'ok' : 'warn');
+  } catch (e) {
+    setStatus('Error: ' + e.message + (e.message.includes('getSelectedShapes')
+      ? ' — PowerPoint JS API 1.5 required. Update Office to use this panel.' : ''), 'err');
+  }
+}
+
+// Core: read current selection, compute new positions, write back — all in one context
+async function executeOp(computeFn) {
+  try {
+    setStatus('Applying…');
+    let count = 0;
+
+    await PowerPoint.run(async (ctx) => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load(['id', 'name', 'left', 'top', 'width', 'height']);
+      await ctx.sync();
+
+      if (!sel.items.length) {
+        setStatus('No objects selected in PowerPoint.', 'warn');
+        return;
+      }
+
+      // Sync local state with current selection
+      const shapes = sel.items.map(sh => ({
+        id: sh.id, name: sh.name || 'Shape',
+        left: sh.left, top: sh.top,
+        width: sh.width, height: sh.height,
+      }));
+
+      S.shapes = shapes;
+
+      // Ensure key is valid
+      if (S.target === 'key' && (!S.keyId || !shapes.find(s => s.id === S.keyId))) {
+        S.keyId = shapes[0].id;
+      }
+
+      // Compute new positions
+      const updated = computeFn(shapes);
+
+      // Apply to proxies
+      updated.forEach(upd => {
+        const proxy = sel.items.find(s => s.id === upd.id);
+        if (proxy) {
+          proxy.left = Math.round(upd.left * 100) / 100;
+          proxy.top  = Math.round(upd.top  * 100) / 100;
+        }
+      });
+
+      await ctx.sync();
+      S.shapes = updated;
+      count = shapes.length;
+    });
+
+    if (count) {
+      setStatus(`Applied to ${count} object${count > 1 ? 's' : ''}.`, 'ok');
+      renderShapesList();
+    }
+  } catch (e) {
+    setStatus('Error: ' + e.message, 'err');
+  }
+}
+
+// ── Alignment math ────────────────────────────────────────────────────────
+
+function getRef(shapes) {
+  if (S.target === 'slide') {
+    return { l: 0, t: 0, w: S.slideW, h: S.slideH };
+  }
+  if (S.target === 'key') {
+    const key = shapes.find(s => s.id === S.keyId);
+    if (key) return { l: key.left, t: key.top, w: key.width, h: key.height };
+  }
+  // Selection bounding box
+  const l = Math.min(...shapes.map(s => s.left));
+  const t = Math.min(...shapes.map(s => s.top));
+  const r = Math.max(...shapes.map(s => s.left + s.width));
+  const b = Math.max(...shapes.map(s => s.top  + s.height));
+  return { l, t, w: r - l, h: b - t };
+}
+
+function doAlign(dir) {
+  executeOp(shapes => {
+    const ref = getRef(shapes);
+    return shapes.map(sh => {
+      // Key object does not move
+      if (S.target === 'key' && sh.id === S.keyId) return sh;
+      let { left, top } = sh;
+      switch (dir) {
+        case 'left':    left = ref.l; break;
+        case 'centerH': left = ref.l + (ref.w - sh.width)  / 2; break;
+        case 'right':   left = ref.l + ref.w - sh.width;  break;
+        case 'top':     top  = ref.t; break;
+        case 'middleV': top  = ref.t + (ref.h - sh.height) / 2; break;
+        case 'bottom':  top  = ref.t + ref.h - sh.height; break;
+      }
+      return { ...sh, left, top };
+    });
+  });
+}
+
+// Distribute Objects: space edges/centers of objects equally
+// First and last objects (by position) are anchors; intermediates move.
+function doDistObj(dir) {
+  if (S.shapes.length < 3) {
+    // With 2 objects, read the current selection and check again
+    executeOp(shapes => {
+      if (shapes.length < 3) {
+        setStatus('Distribute Objects needs 3 or more objects.', 'warn');
+        return shapes;
+      }
+      return computeDistObj(shapes, dir);
+    });
+    return;
+  }
+  executeOp(shapes => computeDistObj(shapes, dir));
+}
+
+function computeDistObj(shapes, dir) {
+  if (shapes.length < 3) return shapes;
+
+  const isH = ['leftEdges', 'hCenters', 'rightEdges'].includes(dir);
+
+  // Get the anchor position for each shape based on dir
+  const getAnchor = (sh) => {
+    switch (dir) {
+      case 'topEdges':     return sh.top;
+      case 'vCenters':     return sh.top  + sh.height / 2;
+      case 'bottomEdges':  return sh.top  + sh.height;
+      case 'leftEdges':    return sh.left;
+      case 'hCenters':     return sh.left + sh.width  / 2;
+      case 'rightEdges':   return sh.left + sh.width;
+    }
+  };
+
+  const sorted = [...shapes].sort((a, b) => getAnchor(a) - getAnchor(b));
+  const first  = getAnchor(sorted[0]);
+  const last   = getAnchor(sorted[sorted.length - 1]);
+  const step   = (last - first) / (sorted.length - 1);
+
+  // Build a map of id → new position
+  const newPos = {};
+  sorted.forEach((sh, i) => {
+    const targetAnchor = first + i * step;
+    switch (dir) {
+      case 'topEdges':    newPos[sh.id] = { top:  targetAnchor }; break;
+      case 'vCenters':    newPos[sh.id] = { top:  targetAnchor - sh.height / 2 }; break;
+      case 'bottomEdges': newPos[sh.id] = { top:  targetAnchor - sh.height }; break;
+      case 'leftEdges':   newPos[sh.id] = { left: targetAnchor }; break;
+      case 'hCenters':    newPos[sh.id] = { left: targetAnchor - sh.width  / 2 }; break;
+      case 'rightEdges':  newPos[sh.id] = { left: targetAnchor - sh.width }; break;
+    }
+  });
+
+  // First and last objects don't move
+  delete newPos[sorted[0].id];
+  delete newPos[sorted[sorted.length - 1].id];
+
+  return shapes.map(sh => ({
+    ...sh,
+    ...(newPos[sh.id] || {}),
+  }));
+}
+
+// Distribute Spacing: equal gaps between adjacent objects
+// If spacingMm === 0: auto (span between outermost objects is preserved, gaps equalized)
+// If spacingMm > 0:  fixed gap from leftmost/topmost anchor
+function doSpacing(axis) {
+  executeOp(shapes => {
+    if (shapes.length < 2) {
+      setStatus('Distribute Spacing needs 2 or more objects.', 'warn');
+      return shapes;
+    }
+
+    const key  = axis === 'h' ? 'left'  : 'top';
+    const size = axis === 'h' ? 'width' : 'height';
+
+    const sorted = [...shapes].sort((a, b) => a[key] - b[key]);
+    const result = shapes.map(sh => ({ ...sh }));
+
+    let pos;
+    let gap;
+
+    if (S.spacingMm === 0) {
+      // Auto: preserve span between outermost objects, equalize gaps
+      const first       = sorted[0];
+      const last        = sorted[sorted.length - 1];
+      const totalSpan   = (last[key] + last[size]) - first[key];
+      const totalSizes  = sorted.reduce((s, sh) => s + sh[size], 0);
+      gap = (totalSpan - totalSizes) / (sorted.length - 1);
+      pos = first[key];
+    } else {
+      // Fixed spacing: leftmost/topmost is anchor
+      gap = S.spacingMm * MM_TO_PT;
+      pos = sorted[0][key];
+    }
+
+    sorted.forEach(sh => {
+      const idx = result.findIndex(s => s.id === sh.id);
+      result[idx] = { ...result[idx], [key]: pos };
+      pos += sh[size] + gap;
+    });
+
+    return result;
+  });
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+
+function setTarget(t) {
+  S.target = t;
+
+  // Default keyId to first shape when switching to key mode
+  if (t === 'key' && S.shapes.length && (!S.keyId || !S.shapes.find(s => s.id === S.keyId))) {
+    S.keyId = S.shapes[0].id;
+  }
+
+  document.querySelectorAll('.at-btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.target === t));
+
+  // Show key-section only in Key Object mode
+  const ks = document.getElementById('key-section');
+  ks.classList.toggle('visible', t === 'key');
+
+  // Auto-read selection when switching to key mode if we don't have shapes
+  if (t === 'key' && !S.shapes.length) readSelection();
+
+  renderShapesList();
+}
+
+function setSlide(w, h, btn) {
+  S.slideW = w;
+  S.slideH = h;
+  document.querySelectorAll('.ss-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function setKeyShape(id) {
+  S.keyId = id;
+  renderShapesList();
+}
+
+function renderShapesList() {
+  const list  = document.getElementById('shapes-list');
+  const count = document.getElementById('sel-count');
+
+  if (!S.shapes.length) {
+    count.textContent = '0 objects';
+    list.innerHTML = '<div class="empty-msg">Select objects in PowerPoint, then click Refresh</div>';
+    return;
+  }
+
+  count.textContent = `${S.shapes.length} object${S.shapes.length > 1 ? 's' : ''}`;
+
+  list.innerHTML = S.shapes.map(sh => {
+    const isKey = sh.id === S.keyId;
+    const safe  = sh.id.replace(/'/g, "\\'");
+    return `<div class="shape-row ${isKey ? 'key-row' : ''}" onclick="setKeyShape('${safe}')" title="${isKey ? 'Key Object — stays fixed' : 'Click to set as Key Object'}">
+      <span class="key-dot">${isKey ? '★' : '○'}</span>
+      <span class="shape-name">${sh.name}</span>
+      ${isKey ? '<span class="key-badge">KEY</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+
+function init() {
+  setTarget('selection');
+}
+
+if (typeof Office !== 'undefined') {
+  Office.onReady(() => init());
+} else {
+  init();
+}
+</script>
+</body>
+</html>

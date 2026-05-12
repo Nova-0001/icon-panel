@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+
+  <Id>{8A2F3D1E-7C4B-4E9A-B521-3D5F8A9C0E2F}</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Alignment Panel</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Align"/>
+  <Description DefaultValue="Align, distribute and space objects on your slide — Illustrator-style."/>
+
+  <IconUrl DefaultValue="https://nova-0001.github.io/icon-panel/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://nova-0001.github.io/icon-panel/icon-64.png"/>
+  <SupportUrl DefaultValue="https://nova-0001.github.io/icon-panel"/>
+
+  <AppDomains>
+    <AppDomain>https://nova-0001.github.io</AppDomain>
+    <AppDomain>https://appsforoffice.microsoft.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.5">
+      <!-- getSelectedShapes() requires PowerPoint JS API 1.5 -->
+      <Set Name="PowerPointApi" MinVersion="1.5"/>
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://nova-0001.github.io/icon-panel/alignment.html"/>
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="AlignGroup">
+                <Label resid="AlignGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="AlignButton">
+                  <Label resid="AlignButton.Label"/>
+                  <Supertip>
+                    <Title resid="AlignButton.Label"/>
+                    <Description resid="AlignButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>AlignTaskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://nova-0001.github.io/icon-panel/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://nova-0001.github.io/icon-panel/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://nova-0001.github.io/icon-panel/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://nova-0001.github.io/icon-panel"/>
+        <bt:Url id="Commands.Url"            DefaultValue="https://nova-0001.github.io/icon-panel/commands.html"/>
+        <bt:Url id="Taskpane.Url"            DefaultValue="https://nova-0001.github.io/icon-panel/alignment.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title"    DefaultValue="Alignment Panel is ready"/>
+        <bt:String id="AlignGroup.Label"    DefaultValue="Alignment Panel"/>
+        <bt:String id="AlignButton.Label"   DefaultValue="Align"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Align, distribute and space objects — Illustrator-style."/>
+        <bt:String id="AlignButton.Tooltip"    DefaultValue="Open the Alignment Panel to align and distribute objects on your slide."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+
+</OfficeApp>
