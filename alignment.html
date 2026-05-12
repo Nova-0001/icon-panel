@@ -567,7 +567,30 @@ async function readSlideSize(ctx) {
     }
   } catch (_) {}
 
-  // All strategies failed — leave inputs at their current user-entered values
+  // S4 (definitive): slide.getImageAsBase64() with NO options.
+  // Microsoft docs: "If width and height aren't specified, the true size of
+  // the slide is used." → the returned PNG pixel dimensions equal the slide's
+  // point dimensions exactly. Works for any document, any custom size.
+  // This is the canonical cross-version workaround confirmed by the community.
+  try {
+    const slide = ctx.presentation.slides.getItemAt(0);
+    const imgResult = slide.getImageAsBase64(); // no options = true size
+    await ctx.sync();
+
+    const dims = await new Promise(res => {
+      const img = new Image();
+      img.onload  = () => res({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => res(null);
+      img.src = 'data:image/png;base64,' + imgResult.value;
+    });
+
+    if (dims && dims.w >= 100 && dims.w <= 5000 && dims.h >= 50) {
+      setSlideDims(dims.w, dims.h, 'auto');
+      return;
+    }
+  } catch (_) {}
+
+  // Final fallback — user-entered input values (defaults 960×540)
   const wEl = document.getElementById('slide-w-inp');
   const hEl = document.getElementById('slide-h-inp');
   if (wEl && hEl) {
@@ -575,7 +598,7 @@ async function readSlideSize(ctx) {
     const h = parseFloat(hEl.value) || 540;
     S.slideW = w; S.slideH = h;
     const srcEl = document.getElementById('slide-dim-src');
-    if (srcEl) srcEl.textContent = 'manual';
+    if (srcEl) srcEl.textContent = 'manual — check Design › Slide Size';
   }
 }
 
