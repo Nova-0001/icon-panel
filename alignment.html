@@ -473,7 +473,8 @@ const S = {
   spacingMm: 0,
   slideW:    null,
   slideH:    null,
-  // flip state no longer tracked client-side — shape.flip() toggles natively
+  flippedH: new Set(),
+  flippedV: new Set(),
 };
 
 // ── Slide size detection ──────────────────────────────────────────────────
@@ -913,16 +914,29 @@ function adjustSpacing(delta) {
 // ── Mirror / Flip ─────────────────────────────────────────────────────
 
 async function doFlip(dir) {
-  // The PowerPoint Office JS API does not expose a flip/mirror method on Shape.
-  // Shape.flip() is not in the published API (confirmed from official docs).
-  // The only available path is the native PowerPoint menu:
-  //   Arrange › Rotate or Flip › Flip Horizontal / Flip Vertical
-  // We show a clear message directing the user there.
-  const label = dir === 'h' ? 'Horizontal' : 'Vertical';
-  setStatus(
-    `Mirror not available via API. In PowerPoint: Arrange › Rotate or Flip › Flip ${label}.`,
-    'warn'
-  );
+  try {
+    setStatus('Flipping…');
+    let count = 0;
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('id');
+      await ctx.sync();
+      if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
+      // Write flipHorizontal / flipVertical directly as properties.
+      // The proxy model queues writes without requiring a prior read.
+      // Toggle is tracked client-side because reading back is unreliable.
+      sel.items.forEach(sh => {
+        const set = dir === 'h' ? S.flippedH : S.flippedV;
+        const flipped = set.has(sh.id);
+        if (dir === 'h') sh.flipHorizontal = !flipped;
+        else             sh.flipVertical   = !flipped;
+        flipped ? set.delete(sh.id) : set.add(sh.id);
+        count++;
+      });
+      await ctx.sync();
+    });
+    setStatus(`Flipped ${count} object${count > 1 ? 's' : ''} ${dir === 'h' ? 'horizontally' : 'vertically'}.`, 'ok');
+  } catch (e) { setStatus('Flip error: ' + e.message, 'err'); }
 }
 
 // ── Reset Text Box ───────────────────────────────────────────────────────
