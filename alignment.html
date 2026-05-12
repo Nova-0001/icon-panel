@@ -200,6 +200,22 @@
       color: #bbb;
     }
 
+    /* ── Slide dimension override row ──────────────────── */
+    #slide-dim-row {
+      display: none; margin-top: 8px;
+      padding: 7px 9px; background: #f7f9fc;
+      border: 1px solid #ddd; border-radius: 5px;
+    }
+    #slide-dim-row .sdlbl { font-size: 9px; color: #888; margin-bottom: 5px;
+      display: flex; justify-content: space-between; }
+    #slide-dim-row .sdinputs { display: flex; align-items: center; gap: 5px; }
+    .sd-inp {
+      width: 50px; text-align: center; padding: 3px 4px;
+      font-size: 12px; font-weight: 500;
+      border: 1px solid #ddd; border-radius: 3px; outline: none;
+    }
+    .sd-inp:focus { border-color: #0078d4; }
+
     /* ── Status ────────────────────────────────────────── */
     /* ── Reset Text Box button ─────────────────────── */
     .reset-btn {
@@ -304,6 +320,24 @@
         </button>
 
       </div>
+
+      <!-- Shown only in Slide mode — enter or verify slide dimensions -->
+      <div id="slide-dim-row">
+        <div class="sdlbl">
+          <span>Slide size (points)</span>
+          <span id="slide-dim-src" style="color:#0078d4"></span>
+        </div>
+        <div class="sdinputs">
+          <input class="sd-inp" id="slide-w-inp" type="text" value="960"
+                 title="Slide width in points" oninput="onSlideDimInput()">
+          <span style="color:#aaa;font-size:12px">×</span>
+          <input class="sd-inp" id="slide-h-inp" type="text" value="540"
+                 title="Slide height in points" oninput="onSlideDimInput()">
+          <span style="font-size:9px;color:#888">pt</span>
+        </div>
+        <div style="font-size:8px;color:#bbb;margin-top:4px">16:9 widescreen: 960×540 · 4:3 standard: 720×540</div>
+      </div>
+
     </div>
 
     <!-- ── ALIGN OBJECTS ────────────────────────────── -->
@@ -439,6 +473,7 @@ const S = {
   spacingMm: 0,
   slideW:    null,
   slideH:    null,
+  // flip state no longer tracked client-side — shape.flip() toggles natively
 };
 
 // ── Slide size detection ──────────────────────────────────────────────────
@@ -460,20 +495,63 @@ function toPoints(v) {
   return v;                            // Already points
 }
 
+function setSlideDims(w, h, source) {
+  S.slideW = w; S.slideH = h;
+  const wEl = document.getElementById('slide-w-inp');
+  const hEl = document.getElementById('slide-h-inp');
+  const srcEl = document.getElementById('slide-dim-src');
+  if (wEl) wEl.value = Math.round(w);
+  if (hEl) hEl.value = Math.round(h);
+  if (srcEl) srcEl.textContent = source || '';
+}
+
+function onSlideDimInput() {
+  const w = parseFloat(document.getElementById('slide-w-inp').value) || 0;
+  const h = parseFloat(document.getElementById('slide-h-inp').value) || 0;
+  if (w > 0 && h > 0) { S.slideW = w; S.slideH = h; }
+}
+
 async function readSlideSize(ctx) {
-  // Strategy 1: presentation.width / presentation.height
-  // PowerPoint JS API 1.5+ exposes these in points; may also be in EMUs or inches.
+  // S0 (preferred): presentation.pageSetup.slideWidth/slideHeight (PowerPointApi 1.10)
+  // This is the correct documented API — values are always in points.
+  try {
+    ctx.presentation.pageSetup.load(['slideWidth', 'slideHeight']);
+    await ctx.sync();
+    const w = ctx.presentation.pageSetup.slideWidth;
+    const h = ctx.presentation.pageSetup.slideHeight;
+    if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
+      setSlideDims(w, h, 'auto'); return;
+    }
+  } catch (_) {}
+
+  // S1: presentation.width / height (older API — usually undefined, kept as fallback)
   try {
     ctx.presentation.load(['width', 'height']);
     await ctx.sync();
     const w = toPoints(ctx.presentation.width);
     const h = toPoints(ctx.presentation.height);
     if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
-      S.slideW = w; S.slideH = h; return;
+      setSlideDims(w, h, 'auto'); return;
     }
   } catch (_) {}
 
-  // Strategy 2: slideMasters carry the presentation's defined slide size
+  // S2: getSelectedSlides
+  try {
+    const slides = ctx.presentation.getSelectedSlides();
+    slides.load('items');
+    await ctx.sync();
+    if (slides.items.length > 0) {
+      slides.items[0].load(['width', 'height']);
+      await ctx.sync();
+      const w = toPoints(slides.items[0].width);
+      const h = toPoints(slides.items[0].height);
+      if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
+        setSlideDims(w, h, 'auto'); return;
+      }
+    }
+  } catch (_) {}
+
+  // S3: slideMasters
   try {
     const masters = ctx.presentation.slideMasters;
     masters.load('items');
@@ -484,29 +562,21 @@ async function readSlideSize(ctx) {
       const w = toPoints(masters.items[0].width);
       const h = toPoints(masters.items[0].height);
       if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
-        S.slideW = w; S.slideH = h; return;
+        setSlideDims(w, h, 'auto'); return;
       }
     }
   } catch (_) {}
 
-  // Strategy 3: bounding box of all slide shapes (imprecise but better than nothing)
-  // Only accept if shapes actually reach meaningful extents.
-  try {
-    const slide = ctx.presentation.slides.getItemAt(0);
-    slide.shapes.load(['left', 'top', 'width', 'height']);
-    await ctx.sync();
-    const items = slide.shapes.items;
-    if (items.length > 0) {
-      const maxR = Math.max(...items.map(s => s.left + s.width));
-      const maxB = Math.max(...items.map(s => s.top  + s.height));
-      if (maxR >= 400 && maxB >= 200) {
-        S.slideW = maxR; S.slideH = maxB; return;
-      }
-    }
-  } catch (_) {}
-
-  // Could not determine — leave null; getRef will surface a clear error.
-  S.slideW = null; S.slideH = null;
+  // All strategies failed — leave inputs at their current user-entered values
+  const wEl = document.getElementById('slide-w-inp');
+  const hEl = document.getElementById('slide-h-inp');
+  if (wEl && hEl) {
+    const w = parseFloat(wEl.value) || 960;
+    const h = parseFloat(hEl.value) || 540;
+    S.slideW = w; S.slideH = h;
+    const srcEl = document.getElementById('slide-dim-src');
+    if (srcEl) srcEl.textContent = 'manual';
+  }
 }
 
 // ── PowerPoint API ────────────────────────────────────────────────────────
@@ -603,13 +673,13 @@ async function executeOp(computeFn) {
 
 function getRef(shapes) {
   if (S.target === 'slide') {
-    if (!S.slideW || !S.slideH) {
-      throw new Error(
-        'Could not read slide dimensions from PowerPoint. ' +
-        'Select objects on your slide and try again, or switch to Selection mode.'
-      );
-    }
-    return { l: 0, t: 0, w: S.slideW, h: S.slideH };
+    // Always read from the visible inputs so the user can override
+    const wEl = document.getElementById('slide-w-inp');
+    const hEl = document.getElementById('slide-h-inp');
+    const w = parseFloat(wEl?.value) || S.slideW || 0;
+    const h = parseFloat(hEl?.value) || S.slideH || 0;
+    if (!w || !h) throw new Error('Enter the slide dimensions in the Slide size row above.');
+    return { l: 0, t: 0, w, h };
   }
   if (S.target === 'key') {
     const key = shapes.find(s => s.id === S.keyId);
@@ -754,7 +824,6 @@ function doSpacing(axis) {
 function setTarget(t) {
   S.target = t;
 
-  // Default keyId to first shape when switching to key mode
   if (t === 'key' && S.shapes.length && (!S.keyId || !S.shapes.find(s => s.id === S.keyId))) {
     S.keyId = S.shapes[0].id;
   }
@@ -762,10 +831,11 @@ function setTarget(t) {
   document.querySelectorAll('.at-btn').forEach(b =>
     b.classList.toggle('on', b.dataset.target === t));
 
-  // Show key-section only in Key Object mode
-  const ks = document.getElementById('key-section');
-  ks.classList.toggle('visible', t === 'key');
+  document.getElementById('key-section').classList.toggle('visible', t === 'key');
 
+  // Show slide dimension row when Slide mode is active
+  const dimRow = document.getElementById('slide-dim-row');
+  if (dimRow) dimRow.style.display = t === 'slide' ? 'block' : 'none';
 }
 
 // ── Key Object (Option B) ─────────────────────────────────────────────
@@ -814,20 +884,23 @@ function adjustSpacing(delta) {
 // ── Mirror / Flip ─────────────────────────────────────────────────────
 
 async function doFlip(dir) {
-  // flipHorizontal / flipVertical are boolean properties, not methods.
-  // We must load the current value, then toggle it.
-  const prop = dir === 'h' ? 'flipHorizontal' : 'flipVertical';
+  // shape.flip('Horizontal') / shape.flip('Vertical') is the correct Office JS call.
+  // It mirrors the VBA Shape.Flip(msoFlipHorizontal) behaviour:
+  // each call toggles — calling it twice returns the shape to its original state.
+  // No client-side state tracking needed.
+  const cmd = dir === 'h' ? 'Horizontal' : 'Vertical';
   try {
     setStatus('Flipping…');
+    let count = 0;
     await PowerPoint.run(async ctx => {
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load(['id', prop]);
+      sel.load('id');
       await ctx.sync();
       if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
-      sel.items.forEach(sh => { sh[prop] = !sh[prop]; });
+      sel.items.forEach(sh => { sh.flip(cmd); count++; });
       await ctx.sync();
     });
-    setStatus(`Flipped ${dir === 'h' ? 'horizontally' : 'vertically'}.`, 'ok');
+    setStatus(`Flipped ${count} object${count > 1 ? 's' : ''} ${dir === 'h' ? 'horizontally' : 'vertically'}.`, 'ok');
   } catch (e) { setStatus('Flip error: ' + e.message, 'err'); }
 }
 
@@ -837,60 +910,31 @@ async function doFlip(dir) {
 // Also descends one level into groups to reach grouped text boxes.
 
 async function resetTextBoxes() {
+  // hasTextFrame is not reliably loadable in all Office versions.
+  // Apply textFrame properties to all selected shapes directly.
+  // PowerPoint silently ignores the operation on shapes that lack text frames;
+  // shapes that DO have them get updated.
   try {
-    setStatus('Resetting text boxes…');
+    setStatus('Resetting…');
     let count = 0;
-
     await PowerPoint.run(async ctx => {
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load(['id', 'name', 'hasTextFrame']);
+      sel.load(['id', 'name']);
       await ctx.sync();
-
       if (!sel.items.length) { setStatus('No objects selected.', 'warn'); return; }
-
-      // Separate direct text-frame shapes from potential groups
-      const textShapes  = sel.items.filter(sh => sh.hasTextFrame);
-      const nonTextItems = sel.items.filter(sh => !sh.hasTextFrame);
-
-      // Attempt to descend one level into groups
-      if (nonTextItems.length) {
-        try {
-          nonTextItems.forEach(sh => sh.groupItems.load(['id', 'hasTextFrame']));
-          await ctx.sync();
-          nonTextItems.forEach(sh => {
-            sh.groupItems.items
-              .filter(item => item.hasTextFrame)
-              .forEach(item => textShapes.push(item));
-          });
-        } catch (_) {
-          // groupItems not accessible for non-group shapes — safe to ignore
-        }
-      }
-
-      if (!textShapes.length) {
-        setStatus('No text boxes found in the selection.', 'warn');
-        return;
-      }
-
-      // Apply all text frame properties
-      textShapes.forEach(sh => {
-        const tf        = sh.textFrame;
-        // "Do not Autofit"
+      count = sel.items.length;
+      sel.items.forEach(sh => {
+        const tf = sh.textFrame;
         tf.autoSizeSetting = PowerPoint.ShapeAutoSize.autoSizeNone;
-        // Zero margins (values are in points)
         tf.leftMargin   = 0;
         tf.rightMargin  = 0;
         tf.topMargin    = 0;
         tf.bottomMargin = 0;
-        // Wrap text in shape
         tf.wordWrap     = true;
-        count++;
       });
-
       await ctx.sync();
     });
-
-    if (count > 0) setStatus(`Reset ${count} text box${count !== 1 ? 'es' : ''}.`, 'ok');
+    setStatus(`Reset ${count} text box${count !== 1 ? 'es' : ''}.`, 'ok');
   } catch (e) { setStatus('Reset error: ' + e.message, 'err'); }
 }
 
