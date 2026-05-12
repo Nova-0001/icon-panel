@@ -109,32 +109,31 @@
     .act-btn i { font-size: 18px; }
 
     /* ── Distribute Spacing row ────────────────────────── */
-    .spacing-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 0;
-    }
-    .spacing-btns { display: flex; gap: 3px; }
-    .spacing-input-wrap {
-      display: flex;
-      align-items: center;
-      gap: 3px;
+    .spc-row { display: flex; align-items: center; gap: 6px; }
+    .spc-controls {
       flex: 1;
+      display: flex; align-items: center; gap: 5px;
+      padding-left: 8px;
+      border-left: 1px solid #ebebeb;
     }
-    .spacing-input-wrap input {
-      flex: 1;
-      min-width: 0;
-      padding: 4px 6px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 11px;
-      font-family: 'Courier New', monospace;
-      text-align: right;
-      outline: none;
+    .stepper-btn {
+      width: 30px; height: 30px;
+      border: 1px solid #ddd; border-radius: 4px;
+      background: #fff; color: #444;
+      font-size: 17px; font-weight: 500; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0; cursor: pointer; flex-shrink: 0;
+      transition: all .1s;
     }
-    .spacing-input-wrap input:focus { border-color: #0078d4; }
-    .spacing-input-wrap span { font-size: 10px; color: #888; white-space: nowrap; }
+    .stepper-btn:hover { border-color: #0078d4; color: #0078d4; background: #dbeeff; }
+    .stepper-btn:active { background: #bdd9f5; }
+    #spacing-val {
+      width: 44px; text-align: center;
+      padding: 4px 2px; font-size: 13px; font-weight: 500;
+      border: 1px solid #ddd; border-radius: 4px; outline: none;
+      -webkit-appearance: textfield;
+    }
+    #spacing-val:focus { border-color: #0078d4; }
 
     /* ── Key object list ───────────────────────────────── */
     #key-section { display: none; }
@@ -240,7 +239,7 @@
     .at-btn span { font-size: 12px; font-weight: 600; letter-spacing: 0; }
 
     /* ── Spacing input — narrow ───────────────────────── */
-    .spacing-input-wrap input { width: 52px; min-width: 0; flex: none; }
+    /* .spacing-input-wrap removed; replaced with stepper design */
 
     /* ── Icon buttons (mirror + stack order) ─────────── */
     .icon-btn-row { display: flex; gap: 4px; }
@@ -333,37 +332,21 @@
       </div>
     </div>
 
-    </div>
-
     <!-- ── DISTRIBUTE SPACING ────────────────────────── -->
     <div class="section">
-      <div class="section-label">Distribute Spacing</div>
-      <div class="spacing-row">
-
-        <!-- Two action buttons -->
-        <div class="spacing-btns">
-          <button class="act-btn" onclick="doSpacing('v')" title="Equal vertical gaps between objects">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2"  width="16" height="4" rx=".5"/><rect x="4" y="10" width="16" height="4" rx=".5"/><rect x="4" y="18" width="16" height="4" rx=".5"/><line x1="2" y1="6"  x2="2" y2="10"/><line x1="1" y1="6"  x2="3" y2="6"/><line x1="1" y1="10" x2="3" y2="10"/><line x1="2" y1="14" x2="2" y2="18"/><line x1="1" y1="14" x2="3" y2="14"/><line x1="1" y1="18" x2="3" y2="18"/></svg>
-          </button>
-          <button class="act-btn" onclick="doSpacing('h')" title="Equal horizontal gaps between objects">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2"  y="4" width="4"  height="16" rx=".5"/><rect x="10" y="4" width="4"  height="16" rx=".5"/><rect x="18" y="4" width="4"  height="16" rx=".5"/><line x1="6"  y1="2" x2="10" y2="2"/><line x1="6"  y1="1" x2="6"  y2="3"/><line x1="10" y1="1" x2="10" y2="3"/><line x1="14" y1="2" x2="18" y2="2"/><line x1="14" y1="1" x2="14" y2="3"/><line x1="18" y1="1" x2="18" y2="3"/></svg>
-          </button>
+      <div class="section-label">Distribute Spacing <span style="font-weight:400;color:#bbb;font-size:9px;letter-spacing:0;text-transform:none">— 0&nbsp;=&nbsp;auto</span></div>
+      <div class="spc-row">
+        <button class="act-btn" style="width:44px;height:44px;flex-shrink:0" onclick="doSpacing('v')" title="Equal vertical gaps between objects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2"  width="16" height="4" rx=".5"/><rect x="4" y="10" width="16" height="4" rx=".5"/><rect x="4" y="18" width="16" height="4" rx=".5"/><line x1="2" y1="6"  x2="2" y2="10"/><line x1="1" y1="6"  x2="3" y2="6"/><line x1="1" y1="10" x2="3" y2="10"/><line x1="2" y1="14" x2="2" y2="18"/><line x1="1" y1="14" x2="3" y2="14"/><line x1="1" y1="18" x2="3" y2="18"/></svg></button>
+        <button class="act-btn" style="width:44px;height:44px;flex-shrink:0" onclick="doSpacing('h')" title="Equal horizontal gaps between objects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2"  y="4" width="4"  height="16" rx=".5"/><rect x="10" y="4" width="4"  height="16" rx=".5"/><rect x="18" y="4" width="4"  height="16" rx=".5"/><line x1="6"  y1="2" x2="10" y2="2"/><line x1="6"  y1="1" x2="6"  y2="3"/><line x1="10" y1="1" x2="10" y2="3"/><line x1="14" y1="2" x2="18" y2="2"/><line x1="14" y1="1" x2="14" y2="3"/><line x1="18" y1="1" x2="18" y2="3"/></svg></button>
+        <div class="spc-controls">
+          <button class="stepper-btn" onclick="adjustSpacing(-0.5)" title="Decrease spacing">−</button>
+          <input type="text" id="spacing-val" value="0" inputmode="decimal" title="Gap in mm — 0 distributes evenly between outermost objects">
+          <button class="stepper-btn" onclick="adjustSpacing(+0.5)" title="Increase spacing">+</button>
+          <span style="font-size:10px;color:#888;flex-shrink:0">mm</span>
         </div>
-
-        <!-- Spacing value -->
-        <div class="spacing-input-wrap">
-          <input type="number" id="spacing-val" value="0" min="0" step="0.5"
-                 oninput="S.spacingMm = parseFloat(this.value) || 0"
-                 title="Spacing value in mm. 0 = auto (equal gaps between outermost objects)">
-          <span>mm</span>
-        </div>
-
-        <span style="font-size:9px;color:#bbb;flex-shrink:0" title="0 = auto space between outermost">
-          0 = auto
-        </span>
-
       </div>
     </div>
+
 
     <!-- ── KEY OBJECT (Option B) ────────────────────── -->
     <div class="section" id="key-section">
@@ -396,7 +379,6 @@
           <span>Vertical</span>
         </button>
       </div>
-    </div>
     </div>
 
     <!-- ── STACK ORDER ───────────────────────────────── -->
@@ -479,35 +461,52 @@ function toPoints(v) {
 }
 
 async function readSlideSize(ctx) {
-  // Load shapes for bounding-box fallback AND presentation dims together.
-  const slide = ctx.presentation.slides.getItemAt(0);
-  slide.shapes.load(['left', 'top', 'width', 'height']);
-  ctx.presentation.load(['width', 'height']);
-  await ctx.sync();
+  // Strategy 1: presentation.width / presentation.height
+  // PowerPoint JS API 1.5+ exposes these in points; may also be in EMUs or inches.
+  try {
+    ctx.presentation.load(['width', 'height']);
+    await ctx.sync();
+    const w = toPoints(ctx.presentation.width);
+    const h = toPoints(ctx.presentation.height);
+    if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
+      S.slideW = w; S.slideH = h; return;
+    }
+  } catch (_) {}
 
-  const pw = toPoints(ctx.presentation.width);
-  const ph = toPoints(ctx.presentation.height);
+  // Strategy 2: slideMasters carry the presentation's defined slide size
+  try {
+    const masters = ctx.presentation.slideMasters;
+    masters.load('items');
+    await ctx.sync();
+    if (masters.items.length > 0) {
+      masters.items[0].load(['width', 'height']);
+      await ctx.sync();
+      const w = toPoints(masters.items[0].width);
+      const h = toPoints(masters.items[0].height);
+      if (w >= 100 && w <= 5000 && h >= 50 && h <= 5000) {
+        S.slideW = w; S.slideH = h; return;
+      }
+    }
+  } catch (_) {}
 
-  // Accept if both are plausible slide dimensions (between 2 and 60 inches in points)
-  if (pw >= 144 && pw <= 4320 && ph >= 100 && ph <= 4320) {
-    S.slideW = pw;
-    S.slideH = ph;
-    return;
-  }
+  // Strategy 3: bounding box of all slide shapes (imprecise but better than nothing)
+  // Only accept if shapes actually reach meaningful extents.
+  try {
+    const slide = ctx.presentation.slides.getItemAt(0);
+    slide.shapes.load(['left', 'top', 'width', 'height']);
+    await ctx.sync();
+    const items = slide.shapes.items;
+    if (items.length > 0) {
+      const maxR = Math.max(...items.map(s => s.left + s.width));
+      const maxB = Math.max(...items.map(s => s.top  + s.height));
+      if (maxR >= 400 && maxB >= 200) {
+        S.slideW = maxR; S.slideH = maxB; return;
+      }
+    }
+  } catch (_) {}
 
-  // Fallback: bounding box of all shapes on the slide
-  const items = slide.shapes.items;
-  if (items.length > 0) {
-    const maxR = Math.max(...items.map(s => s.left + s.width));
-    const maxB = Math.max(...items.map(s => s.top  + s.height));
-    S.slideW = Math.max(maxR, 720);
-    S.slideH = Math.max(maxB, S.slideW * 0.5625);
-    return;
-  }
-
-  // Last resort
-  S.slideW = 720;
-  S.slideH = 405;
+  // Could not determine — leave null; getRef will surface a clear error.
+  S.slideW = null; S.slideH = null;
 }
 
 // ── PowerPoint API ────────────────────────────────────────────────────────
@@ -554,11 +553,9 @@ async function executeOp(computeFn) {
     await PowerPoint.run(async (ctx) => {
       const sel = ctx.presentation.getSelectedShapes();
       sel.load(['id', 'name', 'left', 'top', 'width', 'height']);
-
-      // Always measure the slide before using it as a reference
+      // Load slide size in same batch — readSlideSize will sync for us
       await readSlideSize(ctx);
-
-      // readSlideSize already called ctx.sync(); the shapes are now loaded too
+      // sel.items is populated because readSlideSize called ctx.sync()
       if (!sel.items.length) {
         setStatus('No objects selected in PowerPoint.', 'warn');
         return;
@@ -592,7 +589,10 @@ async function executeOp(computeFn) {
     });
 
     if (count) {
-      setStatus(`Applied to ${count} object${count > 1 ? 's' : ''}.`, 'ok');
+      const dimNote = (S.target === 'slide' && S.slideW)
+        ? ` (slide ${Math.round(S.slideW)}×${Math.round(S.slideH)}pt)`
+        : '';
+      setStatus(`Applied to ${count} object${count > 1 ? 's' : ''}${dimNote}.`, 'ok');
     }
   } catch (e) {
     setStatus('Error: ' + e.message, 'err');
@@ -603,6 +603,12 @@ async function executeOp(computeFn) {
 
 function getRef(shapes) {
   if (S.target === 'slide') {
+    if (!S.slideW || !S.slideH) {
+      throw new Error(
+        'Could not read slide dimensions from PowerPoint. ' +
+        'Select objects on your slide and try again, or switch to Selection mode.'
+      );
+    }
     return { l: 0, t: 0, w: S.slideW, h: S.slideH };
   }
   if (S.target === 'key') {
@@ -799,6 +805,12 @@ function clearKey() {
   setStatus('Key object cleared.');
 }
 
+function adjustSpacing(delta) {
+  S.spacingMm = Math.max(0, Math.round((S.spacingMm + delta) * 10) / 10);
+  const el = document.getElementById('spacing-val');
+  if (el) el.value = S.spacingMm;
+}
+
 // ── Mirror / Flip ─────────────────────────────────────────────────────
 
 async function doFlip(dir) {
@@ -917,6 +929,12 @@ function setStatus(msg, type) {
 
 function init() {
   setTarget('selection');
+  // Wire the spacing input (text type, so oninput not in HTML)
+  const sv = document.getElementById('spacing-val');
+  if (sv) sv.addEventListener('input', () => {
+    const v = parseFloat(sv.value);
+    S.spacingMm = isNaN(v) ? 0 : Math.max(0, v);
+  });
 }
 
 if (typeof Office !== 'undefined') {
