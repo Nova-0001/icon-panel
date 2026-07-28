@@ -135,6 +135,18 @@
     }
     #spacing-val:focus { border-color: #0078d4; }
 
+    /* ── Corner radius presets ─────────────── */
+    .rad-presets { display: flex; gap: 4px; }
+    .rad-preset {
+      flex: 1; height: 30px;
+      border: 1px solid #ddd; border-radius: 4px;
+      background: #fff; color: #444;
+      font-size: 12px; font-weight: 600;
+      transition: all .1s;
+    }
+    .rad-preset:hover { border-color: #0078d4; color: #0078d4; background: #dbeeff; }
+    .rad-preset:active { background: #bdd9f5; }
+
     /* ── Key object list ───────────────────────────────── */
     #key-section { display: none; }
     #key-section.visible { display: block; }
@@ -440,27 +452,23 @@
 
     <!-- ── CORNER RADIUS ───────────────────── -->
     <div class="section">
-      <div class="section-label">Corner Radius <span style="font-weight:400;color:#bbb;font-size:9px;letter-spacing:0;text-transform:none">— rounded rectangles only</span></div>
+      <div class="section-label">Rounded rectangles radius</div>
       <div class="spc-row" style="margin-bottom:8px">
-        <span class="ctrl-lbl" style="width:auto">Radius</span>
-        <input type="text" id="radius-val" value="6" inputmode="decimal"
-               style="width:56px;text-align:center;padding:5px 4px;font-size:13px;font-weight:500;border:1px solid #ddd;border-radius:4px;outline:none"
-               title="Corner radius to apply">
-        <div style="display:flex;gap:3px">
-          <button class="szb on" id="radius-unit-pt" onclick="setRadiusUnit('pt',this)">pt</button>
-          <button class="szb"    id="radius-unit-mm" onclick="setRadiusUnit('mm',this)">mm</button>
-        </div>
+        <button class="stepper-btn" onclick="adjustRadius(-1)" title="Decrease radius">−</button>
+        <input type="text" id="radius-val" value="2" inputmode="decimal"
+               style="width:48px;text-align:center;padding:4px 2px;font-size:13px;font-weight:500;border:1px solid #ddd;border-radius:4px;outline:none"
+               title="Corner radius in points">
+        <button class="stepper-btn" onclick="adjustRadius(1)" title="Increase radius">+</button>
+        <span style="font-size:10px;color:#888;flex-shrink:0">pt</span>
+        <button class="set-key-btn" style="flex:1;width:auto;margin-left:4px" onclick="applyCornerRadius()">Apply</button>
       </div>
-      <button class="set-key-btn" onclick="applyCornerRadius()">
-        <i class="ti ti-border-radius"></i>
-        Apply corner radius
-      </button>
-      <p style="font-size:10px;color:#999;line-height:1.5;margin-top:8px">
-        Overrides the corner radius on selected rounded rectangles, leaving every
-        other attribute unchanged. Plain rectangles and other shapes are skipped,
-        because the API cannot round them without recreating the shape. Requires
-        PowerPoint with API set 1.10.
-      </p>
+      <div class="rad-presets">
+        <button class="rad-preset" onclick="applyRadiusPreset(2)">2</button>
+        <button class="rad-preset" onclick="applyRadiusPreset(4)">4</button>
+        <button class="rad-preset" onclick="applyRadiusPreset(6)">6</button>
+        <button class="rad-preset" onclick="applyRadiusPreset(8)">8</button>
+        <button class="rad-preset" onclick="applyRadiusPreset(10)">10</button>
+      </div>
     </div>
 
   </div><!-- /scroll-area -->
@@ -1004,12 +1012,18 @@ async function doZOrder(op) {
 // shorter side (0 to 0.5), mirroring the roundRect geometry. The exact scaling
 // is not documented for the JS API, so verify visually on first use.
 
-let radiusUnit = 'pt';   // 'pt' | 'mm'
+function adjustRadius(delta) {
+  const el = document.getElementById('radius-val');
+  let v = parseFloat(el.value);
+  if (isNaN(v)) v = 0;
+  v = Math.max(0, Math.round((v + delta) * 10) / 10);
+  el.value = v;
+}
 
-function setRadiusUnit(u, btn) {
-  radiusUnit = u;
-  document.getElementById('radius-unit-pt').classList.toggle('on', u === 'pt');
-  document.getElementById('radius-unit-mm').classList.toggle('on', u === 'mm');
+// Sets the field to a preset value (points) and applies it immediately.
+function applyRadiusPreset(pt) {
+  document.getElementById('radius-val').value = pt;
+  applyCornerRadius();
 }
 
 async function applyCornerRadius() {
@@ -1024,7 +1038,7 @@ async function applyCornerRadius() {
 
   const raw = parseFloat(document.getElementById('radius-val').value);
   if (isNaN(raw) || raw < 0) { setStatus('Enter a radius of 0 or more.', 'warn'); return; }
-  const radiusPt = radiusUnit === 'mm' ? raw * MM_TO_PT : raw;
+  const radiusPt = raw;   // radius is always in points
 
   try {
     setStatus('Applying…');

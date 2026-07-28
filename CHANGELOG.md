@@ -8,6 +8,10 @@ in PowerPoint. See WORKFLOW.md for the full process.
 
 ## 2026-07-28
 
+- Align: Corner Radius UI refined per feedback. Renamed to "Rounded rectangles
+  radius", dropped the subtitle and the explanatory blurb, removed the pt/mm
+  toggle (points only), defaulted the field to 2 with up/down steppers, and
+  added one-click presets (2, 4, 6, 8, 10 pt) that apply immediately.
 - Align: added a Corner Radius section. Overrides the corner radius on selected
   rounded rectangles via the Adjustments API (index 0), non-destructively. Plain
   rectangles and other shapes are skipped by design, because the JS API cannot
