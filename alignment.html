@@ -438,6 +438,31 @@
       </button>
     </div>
 
+    <!-- ── CORNER RADIUS ───────────────────── -->
+    <div class="section">
+      <div class="section-label">Corner Radius <span style="font-weight:400;color:#bbb;font-size:9px;letter-spacing:0;text-transform:none">— rounded rectangles only</span></div>
+      <div class="spc-row" style="margin-bottom:8px">
+        <span class="ctrl-lbl" style="width:auto">Radius</span>
+        <input type="text" id="radius-val" value="6" inputmode="decimal"
+               style="width:56px;text-align:center;padding:5px 4px;font-size:13px;font-weight:500;border:1px solid #ddd;border-radius:4px;outline:none"
+               title="Corner radius to apply">
+        <div style="display:flex;gap:3px">
+          <button class="szb on" id="radius-unit-pt" onclick="setRadiusUnit('pt',this)">pt</button>
+          <button class="szb"    id="radius-unit-mm" onclick="setRadiusUnit('mm',this)">mm</button>
+        </div>
+      </div>
+      <button class="set-key-btn" onclick="applyCornerRadius()">
+        <i class="ti ti-border-radius"></i>
+        Apply corner radius
+      </button>
+      <p style="font-size:10px;color:#999;line-height:1.5;margin-top:8px">
+        Overrides the corner radius on selected rounded rectangles, leaving every
+        other attribute unchanged. Plain rectangles and other shapes are skipped,
+        because the API cannot round them without recreating the shape. Requires
+        PowerPoint with API set 1.10.
+      </p>
+    </div>
+
   </div><!-- /scroll-area -->
 
   <div id="status">Select objects in PowerPoint to begin.</div>
@@ -961,6 +986,89 @@ async function doZOrder(op) {
     });
     setStatus('Stack order updated.', 'ok');
   } catch (e) { setStatus('Z-order error: ' + e.message, 'err'); }
+}
+
+// ── Corner Radius ─────────────────────────────────────────────
+//
+// Overrides the corner-radius adjustment on selected rounded rectangles.
+// Non-destructive: only adjustment index 0 is set; every other attribute is
+// left untouched. Shapes without a corner adjustment (plain rectangles, and
+// non-geometric shapes) are skipped, because the PowerPoint JS API has no way
+// to change a shape's geometry in place and recreating the shape would lose
+// attributes the API cannot read back (shadow, glow, reflection, and more).
+//
+// Requires PowerPointApi 1.10 (the Adjustments class). Feature-detected at
+// click time so the rest of the panel keeps working on older builds.
+//
+// The radius-to-adjustment conversion treats adjustment 0 as a fraction of the
+// shorter side (0 to 0.5), mirroring the roundRect geometry. The exact scaling
+// is not documented for the JS API, so verify visually on first use.
+
+let radiusUnit = 'pt';   // 'pt' | 'mm'
+
+function setRadiusUnit(u, btn) {
+  radiusUnit = u;
+  document.getElementById('radius-unit-pt').classList.toggle('on', u === 'pt');
+  document.getElementById('radius-unit-mm').classList.toggle('on', u === 'mm');
+}
+
+async function applyCornerRadius() {
+  // Feature gate: the Adjustments class requires PowerPointApi 1.10.
+  const has110 = typeof Office !== 'undefined'
+    && Office.context && Office.context.requirements
+    && Office.context.requirements.isSetSupported('PowerPointApi', '1.10');
+  if (!has110) {
+    setStatus('Corner radius needs PowerPoint with API set 1.10. Update Office to use this.', 'err');
+    return;
+  }
+
+  const raw = parseFloat(document.getElementById('radius-val').value);
+  if (isNaN(raw) || raw < 0) { setStatus('Enter a radius of 0 or more.', 'warn'); return; }
+  const radiusPt = radiusUnit === 'mm' ? raw * MM_TO_PT : raw;
+
+  try {
+    setStatus('Applying…');
+    let applied = 0, skipped = 0;
+
+    await PowerPoint.run(async (ctx) => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load(['items/id', 'items/type', 'items/width', 'items/height']);
+      await ctx.sync();
+      if (!sel.items.length) { setStatus('No objects selected in PowerPoint.', 'warn'); return; }
+
+      const isGeom = sh => sh.type === PowerPoint.ShapeType.geometricShape || sh.type === 'GeometricShape';
+
+      // Load adjustment counts only for geometric shapes; other types throw.
+      sel.items.filter(isGeom).forEach(sh => sh.adjustments.load('count'));
+      await ctx.sync();
+
+      sel.items.forEach(sh => {
+        let count = 0;
+        if (isGeom(sh)) { try { count = sh.adjustments.count; } catch (_) { count = 0; } }
+        if (isGeom(sh) && count >= 1) {
+          const minSide = Math.min(sh.width, sh.height);
+          let frac = minSide > 0 ? radiusPt / minSide : 0;
+          frac = Math.max(0, Math.min(0.5, frac));   // roundRect corner range
+          try { sh.adjustments.set(0, frac); applied++; }
+          catch (_) { skipped++; }
+        } else {
+          skipped++;
+        }
+      });
+
+      await ctx.sync();
+
+      if (applied || skipped) {
+        setStatus(
+          `Corner radius applied to ${applied} shape${applied !== 1 ? 's' : ''}` +
+          (skipped ? `, ${skipped} skipped (no corner adjustment).` : '.'),
+          applied ? 'ok' : 'warn'
+        );
+      }
+    });
+  } catch (e) {
+    setStatus('Corner radius error: ' + e.message, 'err');
+  }
 }
 
 function setStatus(msg, type) {

@@ -8,6 +8,14 @@ in PowerPoint. See WORKFLOW.md for the full process.
 
 ## 2026-07-28
 
+- Align: added a Corner Radius section. Overrides the corner radius on selected
+  rounded rectangles via the Adjustments API (index 0), non-destructively. Plain
+  rectangles and other shapes are skipped by design, because the JS API cannot
+  change a shape's geometry in place and recreating a shape loses attributes it
+  cannot read back (shadow, glow, reflection, and more). Feature-detects
+  PowerPointApi 1.10; the manifest floor was left at 1.5 so the rest of the panel
+  keeps loading on older builds. Radius-to-adjustment scaling (fraction of the
+  shorter side, capped at 0.5) is a best guess pending visual confirmation.
 - Established the local clone and the git-based sync workflow. Added push auth
   (fine-grained token, Contents read/write, macOS Keychain). This entry is the
   end-to-end pipeline test: first commit and push from the local clone.
