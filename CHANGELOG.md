@@ -8,6 +8,13 @@ in PowerPoint. See WORKFLOW.md for the full process.
 
 ## 2026-07-28
 
+- Align: added a "Select rounded rectangles" button to the radius section. Scans
+  the current slide and selects every geometric shape with a corner adjustment,
+  as a proxy for rounded rectangles (the API cannot read a shape's specific
+  geometry, so this also catches other adjustable shapes and skips plain
+  rectangles). Uses Slide.setSelectedShapes; needs API set 1.10 for the
+  adjustment filter. Reports the count so the selection can be eyeballed before
+  applying a radius.
 - Align: Corner Radius UI refined per feedback. Renamed to "Rounded rectangles
   radius", dropped the subtitle and the explanatory blurb, removed the pt/mm
   toggle (points only), defaulted the field to 2 with up/down steppers, and

@@ -453,6 +453,10 @@
     <!-- ── CORNER RADIUS ───────────────────── -->
     <div class="section">
       <div class="section-label">Rounded rectangles radius</div>
+      <button class="set-key-btn" style="margin-bottom:8px" onclick="selectRoundedRects()">
+        <i class="ti ti-click"></i>
+        Select rounded rectangles
+      </button>
       <div class="spc-row" style="margin-bottom:8px">
         <button class="stepper-btn" onclick="adjustRadius(-1)" title="Decrease radius">−</button>
         <input type="text" id="radius-val" value="2" inputmode="decimal"
@@ -1024,6 +1028,59 @@ function adjustRadius(delta) {
 function applyRadiusPreset(pt) {
   document.getElementById('radius-val').value = pt;
   applyCornerRadius();
+}
+
+// Selects every geometric shape on the current slide that has a corner
+// adjustment, as a proxy for "rounded rectangles". The API exposes no way to
+// read a shape's specific geometry, so this also catches other adjustable
+// shapes and skips plain rectangles. Needs PowerPointApi 1.10 (adjustments).
+async function selectRoundedRects() {
+  const has110 = typeof Office !== 'undefined'
+    && Office.context && Office.context.requirements
+    && Office.context.requirements.isSetSupported('PowerPointApi', '1.10');
+  if (!has110) {
+    setStatus('Selecting rounded rectangles needs PowerPoint with API set 1.10.', 'err');
+    return;
+  }
+
+  try {
+    setStatus('Scanning slide…');
+    let found = 0;
+
+    await PowerPoint.run(async (ctx) => {
+      const slide = ctx.presentation.getSelectedSlides().getItemAt(0);
+      slide.load('shapes/items/id,shapes/items/type');
+      await ctx.sync();
+
+      const isGeom = sh => sh.type === PowerPoint.ShapeType.geometricShape || sh.type === 'GeometricShape';
+      const geoms = slide.shapes.items.filter(isGeom);
+      geoms.forEach(sh => sh.adjustments.load('count'));
+      await ctx.sync();
+
+      const ids = [];
+      geoms.forEach(sh => {
+        let count = 0;
+        try { count = sh.adjustments.count; } catch (_) { count = 0; }
+        if (count >= 1) ids.push(sh.id);
+      });
+
+      found = ids.length;
+      if (found > 0) {
+        // Non-empty only: setSelectedShapes([]) is a no-op on some hosts.
+        slide.setSelectedShapes(ids);
+        await ctx.sync();
+      }
+    });
+
+    setStatus(
+      found > 0
+        ? `Selected ${found} rounded shape${found !== 1 ? 's' : ''}. Set a radius, then Apply.`
+        : 'No rounded rectangles found on this slide.',
+      found > 0 ? 'ok' : 'warn'
+    );
+  } catch (e) {
+    setStatus('Select error: ' + e.message, 'err');
+  }
 }
 
 async function applyCornerRadius() {
